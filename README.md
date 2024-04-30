@@ -1,16 +1,16 @@
 <div align="center"><picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/figures/logo_dark.svg">
-  <img alt="aiide" src="docs/figures/logo.svg" width=300">
+  <img alt="aiide" src="docs/figures/logo.svg" width=200">
 </picture></div>
 <br/>
 
 
 
-**`aiide`** is a LLM datastructure management library for providing a RL-type environment to the LLM. It allows you to declare live components(ENV), enable the LLM through tools to modify the ENV and provide the LLM with reward(as function response) and latest snapshot of the ENV.
+**`aiide`** is a LLM datastructure management library for providing a RL-type environment to the LLM. It allows you to declare live components(ENV), enable the LLM through tools to modify the components(ENV) and provide the LLM with feedback/reward(as function response) and latest snapshot of the components(ENV).
 
 <div align="center"><picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/figures/aiide_overview.png">
-  <img alt="guidance" src="docs/figures/aiide_overview.png" width=300">
+  <img alt="guidance" src="docs/figures/aiide_overview.png" width=700">
 </picture></div>
 <br/>
 
