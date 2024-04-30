@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "aiide"
+version = "0.0.1"
+description = "Live components for your LLM"
+authors = ["Anilturaga"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+openai = "^1.24.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
