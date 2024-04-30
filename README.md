@@ -79,6 +79,8 @@ class FormFillingAgent(AIIDE):
         def main(self, field_name,value):
             # let's set the value in the master dataframe
             self.parent.df.loc[self.parent.df['Field'] == field_name, 'Value'] = value
+            # Update the ENV
+            self.parent.ENV[0] = self.parent.df.to_markdown(index=False)
             # response to the agent
             return "Added value '"+str(value) + " to Field '"+field_name+"'"
 
@@ -133,6 +135,8 @@ class FormFillingAgent(AIIDE):
 
             # let's set the value in the master dataframe
             self.parent.df.loc[self.parent.df['Field'] == field_name, 'Value'] = value
+            # Update the ENV
+            self.parent.ENV[0] = self.parent.df.to_markdown(index=False)
             # response to the agent
             return "Added value '"+str(value) + " to Field '"+field_name+"'"
 
