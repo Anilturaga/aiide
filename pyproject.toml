@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "aiide"
-version = "0.0.1"
+version = "0.0.2"
 description = "Live components for your LLM"
 authors = ["Anilturaga"]
 readme = "README.md"

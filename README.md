@@ -5,8 +5,7 @@
 <br/>
 
 
-
-**`aiide`** is a LLM datastructure management library for providing a RL-type environment to the LLM. It allows you to declare live components(ENV), enable the LLM through tools to modify the components(ENV) and provide the LLM with feedback/reward(as function response) and latest snapshot of the components(ENV).
+**`aiide`** facilitates the creation of reinforcement learning (RL)-type environments for large language models (LLMs). It allows you to define and manage live data structures (components) that collectively form the environment (ENV). The LLM can interact with and modify these components by using user provided tools. After each action, along with the tool response, aiide adds the latest snapshot/state of all ENV components and removes all older ENV snapshots from the LLM's memory.
 
 <div align="center"><picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/figures/aiide_overview.png">
