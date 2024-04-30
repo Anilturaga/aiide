@@ -80,13 +80,16 @@ class AIIDE:
             active_messages = copy.deepcopy(self.messages)
             if hasattr(self,"ENV"):
                 if len(self.ENV) != 0:
+                    added = False
                     for index, each_active_message in reversed(list(enumerate(active_messages))):
                         if each_active_message["role"] == "tool":
                             active_messages[index]["content"] = (
                                 active_messages[index]["content"] + "\n" + '\n'.join(self.ENV)
                             )
+                            added = True
                             break
-                    active_messages[0]["content"] += "\n" + '\n'.join(self.ENV)
+                    if added == False:
+                        active_messages[0]["content"] += "\n" + '\n'.join(self.ENV)
             if tools and len(tools)>0:
                 tools__ = [self.tools_[key].tool_def for key in tools if key in self.tools_]
                 # print("->",tools__)

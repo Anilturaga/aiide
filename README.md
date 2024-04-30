@@ -83,6 +83,7 @@ class FormFillingAgent(AIIDE):
             return "Added value '"+str(value) + " to Field '"+field_name+"'"
 
 ```
+> `TOOL_DEF` is a helper proxy for the JSON-SCHEMA of OpenAI function calling. You can directly add the json or even use your own pydantic model's `model_json()`. `TOOL_DEF` and associated `tools.*` would make the code less verbose and have the advantage of intellisense.
 
 3. That's it. We can now start using the agent
 
