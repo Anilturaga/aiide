@@ -1,6 +1,6 @@
 <div align="center"><picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/figures/logo_dark.svg">
-  <img alt="aiide" src="docs/figures/logo.svg" width=200">
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/Anilturaga/aiide/blob/main/docs/figures/logo_dark.svg?raw=True">
+  <img alt="aiide" src="https://github.com/Anilturaga/aiide/blob/main/docs/figures/logo.svg?raw=True" width=200">
 </picture></div>
 <br/>
 
@@ -8,8 +8,14 @@
 **`aiide`** facilitates the creation of reinforcement learning (RL)-type environments for large language models (LLMs). It allows you to define and manage live data structures (components) that collectively form the environment (ENV). The LLM can interact with and modify these components by using user provided tools. After each action, along with the tool response, aiide adds the latest snapshot/state of all ENV components and removes all older ENV snapshots from the LLM's memory.
 
 <div align="center"><picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/figures/aiide_overview.png">
-  <img alt="guidance" src="docs/figures/aiide_overview.png" width=700">
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/Anilturaga/aiide/blob/main/docs/figures/aiide_overview.png?raw=true">
+  <img alt="AIIDE Overview" src="https://github.com/Anilturaga/aiide/blob/main/docs/figures/aiide_overview.png?raw=true" width=500">
+</picture></div>
+<br/>
+ENV states are made available to the LLM in the following way:
+<div align="center"><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/figures/aiide_memory_logic.png">
+  <img alt="AIIDE Memory updates" src="https://github.com/Anilturaga/aiide/blob/main/docs/figures/aiide_memory_logic.png?raw=true" width=700">
 </picture></div>
 <br/>
 
@@ -87,6 +93,8 @@ class FormFillingAgent(AIIDE):
 ```
 > `TOOL_DEF` is a helper proxy for the JSON-SCHEMA of OpenAI function calling. You can directly add the json or even use your own pydantic model's `model_json()`. `TOOL_DEF` and associated `tools.*` would make the code less verbose and have the advantage of intellisense.
 
+Checkout <br/>**[aiide's tool use tutorial](docs/tool_definitions.md)**
+
 3. That's it. We can now start using the agent
 
 `chat` is the function you invoke to start streaming agent response
@@ -162,16 +170,3 @@ while True:
 
 5. Bonus!
 You can use completions and stop sequences in the `chat` function's arguments to implement prompting techniques such as ReAct, CoT etc!
-
-
-
-
-
-
-
-
-
-
-
-
-
