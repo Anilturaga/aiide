@@ -5,7 +5,7 @@
 <br/>
 
 
-**`aiide`** facilitates the creation of reinforcement learning (RL)-type environments for large language models (LLMs). It allows you to define and manage live data structures (components) that collectively form the environment (ENV). The LLM can interact with and modify these components by using user provided tools. After each action, along with the tool response, aiide adds the latest snapshot/state of all ENV components and removes all older ENV snapshots from the LLM's memory.
+**[`aiide`](https://github.com/Anilturaga/aiide)** facilitates the creation of reinforcement learning (RL)-type environments for large language models (LLMs). It allows you to define and manage live data structures (components) that collectively form the environment (ENV). The LLM can interact with and modify these components by using user provided tools. After each action, along with the tool response, aiide adds the latest snapshot/state of all ENV components and removes all older ENV snapshots from the LLM's memory.
 
 <div align="center"><picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://github.com/Anilturaga/aiide/blob/main/docs/figures/aiide_overview.png?raw=true">
@@ -93,7 +93,7 @@ class FormFillingAgent(AIIDE):
 ```
 > `TOOL_DEF` is a helper proxy for the JSON-SCHEMA of OpenAI function calling. You can directly add the json or even use your own pydantic model's `model_json()`. `TOOL_DEF` and associated `tools.*` would make the code less verbose and have the advantage of intellisense.
 
-Checkout <br/>**[aiide's tool use tutorial](docs/tool_definitions.md)**
+Checkout <br/>**[aiide's tool use tutorial](https://github.com/Anilturaga/aiide/blob/main/docs/tool_definitions.md)**
 
 3. That's it. We can now start using the agent
 
