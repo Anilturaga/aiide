@@ -28,7 +28,9 @@ Here
 * _The library will automatically provide the latest snapshot of the dataframe to the LLM.(aiide will automatically remove older snapshots of the dataframe from the LLM memory to avoid confusing it and saving tokens)_
 
 0. Install the package<br/>
-`pip install aiide`
+```bash
+pip install aiide
+```
 
 1. Let's start with defining a simple chat agent
 

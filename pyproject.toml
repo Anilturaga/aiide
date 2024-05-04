@@ -1,9 +1,13 @@
 [tool.poetry]
 name = "aiide"
-version = "0.0.3"
+version = "0.0.4"
 description = "Live components for your LLM"
 authors = ["Anilturaga"]
 readme = "README.md"
+license = "Apache-2.0"
+homepage = "https://github.com/Anilturaga/aiide"
+repository = "https://github.com/Anilturaga/aiide"
+keywords = ["llm", "rl","openai"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
