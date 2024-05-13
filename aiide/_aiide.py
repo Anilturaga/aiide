@@ -59,10 +59,43 @@ class AIIDE:
         stop_words=None,
         tool_choice="auto",
     ):
+        """
+    Conversation with AIIDE.
+
+    Args:
+        user_message (str, optional): The message from the user to be processed.
+        completion (str, optional): The completion of the Agent.
+        tools (list, optional): A list of tools names that can be used to assist with the conversation.
+        stop_words (list, optional): A list of words that should be considered as stop words for the agent response.
+        tool_choice (str, optional): The strategy for choosing which tool to use. Can be "auto", "none", or "required". Defaults to "auto".
+
+    Returns:
+        yields dictionary with one of the following schema based on response type\n
+        if agent response:
+            {
+                "type":"text",
+                "content":"",
+                "delta":""
+            }
+        if tool call:
+            {
+                "type":"tool",
+                "tool_name":"",
+                "tool_arguments":""
+            }
+        if tool response:
+            {
+                "type":"tool_response",
+                "tool_name":"",
+                "tool_arguments":""
+                "tool_response":""
+            }
+    """
+        
         if not hasattr(self, "_setup"):
             raise Exception("Please call self.setup() in __init__")
         # self.setup()
-        if completion:
+        if completion and user_message:
             self.messages.extend(
                 [
                     {"role": "user", "content": user_message},
@@ -100,8 +133,8 @@ class AIIDE:
             if tools and len(tools)>0:
                 tools__ = [self.tools_[key].tool_def for key in tools if key in self.tools_]
             else:
-                tools__ = NotGiven
-                tool_choice = NotGiven
+                tools__ = None
+                tool_choice = None
                 # print("->",tools__)
             response_generator = self.client.chat.completions.create(
                     model=self.model,
@@ -178,7 +211,7 @@ class AIIDE:
                             yield {"type":"tool_response","tool_name":each_func_call["name"],"tool_arguments":each_func_call["arguments"],"tool_response":function_response}
                         self.messages.append(temp_assistant_response)
                         self.messages.extend(temp_func_call_reponses)
-                        if type(tool_choice) == dict:
+                        if type(tool_choice) == dict or tool_choice == "required":
                             # If a tool has been forcefully called, we exit right after the tool execution
                             return
 
