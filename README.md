@@ -171,4 +171,31 @@ while True:
 ```
 
 5. Bonus!
-You can use completions and stop sequences in the `chat` function's arguments to implement prompting techniques such as ReAct, CoT etc!
+You can use completions and stop sequences in the `chat` function's arguments to implement prompting techniques such as ReAct, CoT etc!<br/>
+For Example:
+```python
+from aiide import AIIDE
+import json
+from aiide.tools import *
+
+class Agent(AIIDE):
+    def __init__(self):
+        self.outer_var = 15
+        self.setup(
+            messages=[{"role": "system", "content": "You are a helpful assistant."}],
+            temperature=0.0,
+        )
+
+agent = Agent()
+poems = []
+for each in agent.chat(
+    "Write 2 poems but end each poem with '---'", completion="1.", stop_words=["---"]
+):
+    print(each["delta"], end="")
+poems.append(each["content"])
+print("\n\nSecond generation\n\n")
+for each in agent.chat(completion="---\n2. "):
+    print(each["delta"], end="")
+poems.append(each["content"])
+print("\n",poems)
+```

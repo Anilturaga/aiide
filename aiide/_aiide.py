@@ -3,7 +3,7 @@ import json
 import os
 from openai import OpenAI, NotGiven
 from ._utils import find_inner_classes
-
+import warnings
 class AIIDE:
     """
     Provide LLMs with live components.
@@ -48,26 +48,66 @@ class AIIDE:
         self.model = model
         self.temperature = temperature
         self.messages = messages
+        if hasattr(self,"ENV"):
+            warnings.warn("ENV is not defined. AIIDE will still continue to work without the RL-type features")
 
     def chat(
         self,
-        user_message="",
+        user_message=None,
         completion=None,
         tools=None,
         stop_words=None,
         tool_choice="auto",
     ):
+        """
+    Conversation with AIIDE.
+
+    Args:
+        user_message (str, optional): The message from the user to be processed.
+        completion (str, optional): The completion of the Agent.
+        tools (list, optional): A list of tools names that can be used to assist with the conversation.
+        stop_words (list, optional): A list of words that should be considered as stop words for the agent response.
+        tool_choice (str, optional): The strategy for choosing which tool to use. Can be "auto", "none", or "required". Defaults to "auto".
+
+    Returns:
+        yields dictionary with one of the following schema based on response type\n
+        if agent response:
+            {
+                "type":"text",
+                "content":"",
+                "delta":""
+            }
+        if tool call:
+            {
+                "type":"tool",
+                "tool_name":"",
+                "tool_arguments":""
+            }
+        if tool response:
+            {
+                "type":"tool_response",
+                "tool_name":"",
+                "tool_arguments":""
+                "tool_response":""
+            }
+    """
+        
         if not hasattr(self, "_setup"):
-            raise KeyError("Please call self.setup() in __init__")
+            raise Exception("Please call self.setup() in __init__")
         # self.setup()
-        if completion:
+        if completion and user_message:
             self.messages.extend(
                 [
                     {"role": "user", "content": user_message},
                     {"role": "assistant", "content": completion},
                 ]
             )
-
+        elif completion and not user_message:
+            self.messages.extend(
+                [
+                    {"role": "assistant", "content": completion},
+                ]
+            )
         else:
             self.messages.extend(
                 [
@@ -92,31 +132,21 @@ class AIIDE:
                         active_messages[0]["content"] += "\n" + '\n'.join(self.ENV)
             if tools and len(tools)>0:
                 tools__ = [self.tools_[key].tool_def for key in tools if key in self.tools_]
-                # print("->",tools__)
-                response_generator = self.client.chat.completions.create(
-                        model=self.model,
-                        # model="gpt-4-1106-preview",
-                        messages=active_messages,
-                        tools=tools__,
-                        tool_choice=tool_choice,  # auto is default, but we'll be explicit
-                        max_tokens=4096,
-                        stream=True,
-                        temperature=self.temperature,
-                        stop = stop_words
-                )
             else:
-                response_generator = self.client.chat.completions.create(
-                        model=self.model,
-                        # model="gpt-4-1106-preview",
-                        messages=active_messages,
-                        # tools=tools,
-                        # tool_choice=tool_choice,  # auto is default, but we'll be explicit
-                        max_tokens=4096,
-                        stream=True,
-                        temperature=self.temperature,
-                        stop = stop_words
-                )
-
+                tools__ = None
+                tool_choice = None
+                # print("->",tools__)
+            response_generator = self.client.chat.completions.create(
+                    model=self.model,
+                    # model="gpt-4-1106-preview",
+                    messages=active_messages,
+                    tools=tools__,
+                    tool_choice=tool_choice,  # auto is default, but we'll be explicit
+                    max_tokens=4096,
+                    stream=True,
+                    temperature=self.temperature,
+                    stop = stop_words
+            )
             response_text = ""
             temp_function_call = []
             for response_chunk in response_generator:
@@ -181,6 +211,9 @@ class AIIDE:
                             yield {"type":"tool_response","tool_name":each_func_call["name"],"tool_arguments":each_func_call["arguments"],"tool_response":function_response}
                         self.messages.append(temp_assistant_response)
                         self.messages.extend(temp_func_call_reponses)
+                        if type(tool_choice) == dict or tool_choice == "required":
+                            # If a tool has been forcefully called, we exit right after the tool execution
+                            return
 
                     else:
                         # print("!!!!!!!GPT STOP")
