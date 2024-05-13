@@ -47,3 +47,9 @@ def test_aiide_instance():
             agent.Tool.bool = True
         else:
             agent.Tool.bool = False
+
+
+# Test none for tool choice
+# Test for no ENV
+# Test for single tool choice
+# Test for none for tools
