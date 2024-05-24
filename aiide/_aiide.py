@@ -48,7 +48,7 @@ class AIIDE:
         self.model = model
         self.temperature = temperature
         self.messages = messages
-        if hasattr(self,"ENV"):
+        if not hasattr(self,"ENV"):
             warnings.warn("ENV is not defined. AIIDE will still continue to work without the RL-type features")
 
     def chat(
@@ -58,6 +58,7 @@ class AIIDE:
         tools=None,
         stop_words=None,
         tool_choice="auto",
+        response_format = None
     ):
         """
     Conversation with AIIDE.
@@ -115,6 +116,7 @@ class AIIDE:
                 ]
             )
         # print(self.messages)
+        tool_runs = 0
         while True:
             # print("WHILE")
             active_messages = copy.deepcopy(self.messages)
@@ -145,7 +147,8 @@ class AIIDE:
                     max_tokens=4096,
                     stream=True,
                     temperature=self.temperature,
-                    stop = stop_words
+                    stop = stop_words,
+                    response_format=response_format
             )
             response_text = ""
             temp_function_call = []
@@ -190,6 +193,7 @@ class AIIDE:
                             ].main
                             function_args = json.loads(each_func_call["arguments"])
                             function_response = function_to_call(**function_args)
+                            tool_runs += 1
                             temp_assistant_response["tool_calls"].append(
                                 {
                                     "id": each_func_call["tool_call_id"],
@@ -212,9 +216,13 @@ class AIIDE:
                         self.messages.append(temp_assistant_response)
                         self.messages.extend(temp_func_call_reponses)
                         if type(tool_choice) == dict or tool_choice == "required":
-                            # If a tool has been forcefully called, we exit right after the tool execution
-                            return
-
+                            # If a tool has been forcefully called for more than 100 times, we exit after the final tool execution to avoid usage blowup
+                            if tool_runs > 100:
+                                warnings.warn("Tools have been called 100 times consecutively. If this is the expeceted behaviour, please raise an issue in GitHub!")
+                                return
+                    elif response_chunk.choices[0].finish_reason == "length":
+                        self.messages.append(temp_assistant_response)
+                        warnings.warn("Output token limit reached. Continuing the generation.")
                     else:
                         # print("!!!!!!!GPT STOP")
                         if len(temp_assistant_response["tool_calls"]) == 0:
