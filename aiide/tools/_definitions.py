@@ -11,7 +11,7 @@ class INT:
         self.name = name
         self.description = description
         self.enums = enums
-    
+
     def json(self):
         """
         Returns a dictionary representing the JSON schema for this integer field.
@@ -40,7 +40,7 @@ class FLOAT:
         self.name = name
         self.description = description
         self.enums = enums
-    
+
     def json(self):
         """
         Returns a dictionary representing the JSON schema for this float field.
@@ -69,7 +69,7 @@ class STR:
         self.name = name
         self.description = description
         self.enums = enums
-    
+
     def json(self):
         """
         Returns a dictionary representing the JSON schema for this string field.
@@ -98,7 +98,7 @@ class BOOL:
         self.name = name
         self.description = description
         self.enums = enums
-    
+
     def json(self):
         """
         Returns a dictionary representing the JSON schema for this boolean field.
@@ -129,7 +129,7 @@ class LIST:
         self.description = description
         self.items = item
         self.enums = enums
-    
+
     def json(self):
         """
         Returns a dictionary representing the JSON schema for this list field.
@@ -157,12 +157,12 @@ class DICT:
         properties (list, optional): A list of objects representing the properties of the dictionary.
         enums (list, optional): A list of allowed values for the field.
     """
-    def __init__(self, name, description=None, properties=[], enums=None):
+    def __init__(self, name, description=None, properties=[], enums=None,required:list[str] | None=None):
         self.name = name
         self.description = description
         self.properties = properties
         self.enums = enums
-    
+
     def json(self):
         """
         Returns a dictionary representing the JSON schema for this dictionary field.
@@ -177,6 +177,8 @@ class DICT:
             schema["properties"] = {prop.name: next(iter(prop.json().values())) for prop in self.properties}
         if self.enums:
             schema["enum"] = self.enums
+        if self.required:
+            schema["required"] = self.required
         return {self.name: schema}
 
 

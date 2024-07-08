@@ -81,18 +81,18 @@ class AIIDE:
         if tool call:
             {
                 "type":"tool",
-                "tool_name":"",
-                "tool_arguments":""
+                "name":"",
+                "arguments":""
             }
         if tool response:
             {
                 "type":"tool_response",
-                "tool_name":"",
-                "tool_arguments":""
-                "tool_response":""
+                "name":"",
+                "arguments":""
+                "response":""
             }
     """
-        
+
         if not hasattr(self, "_setup"):
             raise Exception("Please call self.setup() in __init__")
         # self.setup()
@@ -183,7 +183,7 @@ class AIIDE:
                         temp_func_call_reponses = []
 
                         for each_func_call in temp_function_call:
-                            yield {"type":"tool","tool_name":each_func_call["name"],"tool_arguments":each_func_call["arguments"]}
+                            yield {"type":"tool","name":each_func_call["name"],"arguments":each_func_call["arguments"]}
 
                             sub = ""
                             # console. print((each_tool["function"]['arguments']))
@@ -212,7 +212,7 @@ class AIIDE:
                                     "content": function_response,
                                 }
                             )
-                            yield {"type":"tool_response","tool_name":each_func_call["name"],"tool_arguments":each_func_call["arguments"],"tool_response":function_response}
+                            yield {"type":"tool_response","name":each_func_call["name"],"arguments":each_func_call["arguments"],"response":function_response}
                         self.messages.append(temp_assistant_response)
                         self.messages.extend(temp_func_call_reponses)
                         if type(tool_choice) == dict or tool_choice == "required":

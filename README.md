@@ -82,7 +82,7 @@ class FormFillingAgent(AIIDE):
                     )
                 ]
             )
-        
+
         # Main function of the tool is called when the tool is invoked by the agent
         def main(self, field_name,value):
             # let's set the value in the master dataframe
@@ -113,10 +113,10 @@ while True:
             print(each["delta"],end="")
         # is the agent is calling a tool
         if each["type"] == "tool":
-            print("TOOL CALL:",each["tool_name"],each["tool_arguments"])
+            print("TOOL CALL:",each["name"],each["arguments"])
         # the tool's response to the agent
         if each["type"] == "tool_response":
-            print("TOOL RESPONSE",each["tool_response"])
+            print("TOOL RESPONSE",each["response"])
     # for debugging, let's print the table after every turn
     print(agent.df)
 ```
@@ -134,7 +134,7 @@ class FormFillingAgent(AIIDE):
         ... previous code
     class Tool:
         def __init__(self):
-            # User consent bool 
+            # User consent bool
             self.user_consent = False
 
             ... previous code
@@ -157,7 +157,7 @@ while True:
         if each["type"] == "text":
             print(each["delta"],end="")
         if each["type"] == "tool":
-            print("TOOL CALL:",each["tool_name"],each["tool_arguments"])
+            print("TOOL CALL:",each["name"],each["arguments"])
             # ask for user consent
             user_consent = input("do you approve the above tool call?(y/n)")
             if user_consent == 'y:
@@ -166,7 +166,7 @@ while True:
             else:
                 agent.Tool.user_consent = False
         if each["type"] == "tool_response":
-            print("TOOL RESPONSE",each["tool_response"])
+            print("TOOL RESPONSE",each["response"])
 
 ```
 
@@ -199,3 +199,5 @@ for each in agent.chat(completion="---\n2. "):
 poems.append(each["content"])
 print("\n",poems)
 ```
+### Reserved variables
+Here is a non-exhaustive list of helper variables available across aiide agents and tools.

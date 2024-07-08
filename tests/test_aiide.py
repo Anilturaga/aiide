@@ -43,7 +43,7 @@ def test_aiide_instance():
     agent = Agent()
     for each in agent.chat("What's the weather like in San Francisco, Tokyo, and Paris?",completion="Hello. I am",tools=["get_current_weather"]):
         print(each)
-        if each["type"] == "tool" and "tokyo" in each["tool_arguments"].lower():
+        if each["type"] == "tool" and "tokyo" in each["arguments"].lower():
             agent.Tool.bool = True
         else:
             agent.Tool.bool = False
