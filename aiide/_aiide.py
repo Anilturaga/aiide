@@ -4,6 +4,10 @@ import os
 from openai import OpenAI, NotGiven
 from ._utils import find_inner_classes
 import warnings
+from litellm import completion as litellm_completion
+import litellm
+litellm.drop_params=True
+
 class AIIDE:
     """
     Provide LLMs with live components.
@@ -34,14 +38,15 @@ class AIIDE:
             self.tools_[eval(toolName)] = eval("self." + each_class["class"].__name__)
 
             # print("tool func",inspect.isgeneratorfunction(eval(toolName)))
-        if api_key is None:
-            api_key = os.environ.get("OPENAI_API_KEY")
+        # if api_key is None:
+        #     api_key = os.environ.get("OPENAI_API_KEY")
 
-        if api_key is None:
-            raise Exception(
-                "Expected an api_key argument or the OPENAI_API_KEY environment variable to be set!"
-            )
-        self.client = OpenAI(api_key=api_key)
+        # if api_key is None:
+        #     raise Exception(
+        #         "Expected an api_key argument or the OPENAI_API_KEY environment variable to be set!"
+        #     )
+        # self.client = OpenAI(api_key=api_key)
+        self.api_key = api_key
         self._setup = True
         # else:
             # print("")
@@ -138,7 +143,8 @@ class AIIDE:
                 tools__ = None
                 tool_choice = None
                 # print("->",tools__)
-            response_generator = self.client.chat.completions.create(
+            # print(active_messages,tools__)
+            response_generator = litellm_completion(
                     model=self.model,
                     # model="gpt-4-1106-preview",
                     messages=active_messages,
@@ -148,12 +154,16 @@ class AIIDE:
                     stream=True,
                     temperature=self.temperature,
                     stop = stop_words,
-                    response_format=response_format
+                    response_format=response_format,
+                    api_key = self.api_key,
+                    parallel_tool_calls=True,
+
             )
             response_text = ""
             temp_function_call = []
             for response_chunk in response_generator:
                 deltas = response_chunk.choices[0].delta
+                # print("deltas",deltas)
                 if deltas.content:
                     # print(deltas.content)
                     response_text += deltas.content
@@ -176,7 +186,12 @@ class AIIDE:
                         )
                     if deltas.tool_calls[0].function.arguments != "":
                         temp_function_call[-1]["arguments"] += deltas.tool_calls[0].function.arguments
+                # if len(temp_function_call)> 0 and deltas.tools_calls[0].index != tool_index:
+                #     yield {"type":"tool","name":temp_function_call[-1]["name"],"arguments":temp_function_call[-1]["arguments"]}
+                #     tool_index = deltas.tools_calls[0].index
+
                 if response_chunk.choices[0].finish_reason:
+                    # print("finish_reason",response_chunk.choices[0].finish_reason)
                     if response_chunk.choices[0].finish_reason == "tool_calls":
                         # calling functions
                         # print("calling funcs", temp_function_call)
@@ -191,8 +206,13 @@ class AIIDE:
                             function_to_call = self.tools_[
                                 each_func_call["name"]
                             ].main
-                            function_args = json.loads(each_func_call["arguments"])
-                            function_response = function_to_call(**function_args)
+                            try:
+                                function_args = json.loads(each_func_call["arguments"])
+                                function_response = function_to_call(**function_args)
+                            except Exception as e:
+                                # remove prefix string upto first () from error message
+                                e = str(e).split(")", 1)[1]
+                                function_response = "Error in function call:\n" + str(e) + "\nPlease call the function with the correct format of arguments."
                             tool_runs += 1
                             temp_assistant_response["tool_calls"].append(
                                 {
