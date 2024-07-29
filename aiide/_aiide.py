@@ -6,7 +6,37 @@ from ._utils import find_inner_classes
 import warnings
 from litellm import completion as litellm_completion
 import litellm
+import abc
 litellm.drop_params=True
+class Tool(abc.ABC):
+    """
+    This is a base class for tools in the AIIDE module.
+    """
+
+    @abc.abstractmethod
+    def __init__(self, parent):
+        """
+        Initializes a new instance of the Tool class.
+
+        Parameters:
+            parent (object): The parent class.
+
+        """
+        pass
+
+    @abc.abstractmethod
+    def tool_def(self):
+        """
+        This method is called every time an LLM call is made.
+        """
+        pass
+
+    @abc.abstractmethod
+    def main(self):
+        """
+        The main method of the Tool class.
+        """
+        pass
 
 class AIIDE:
     """
@@ -18,34 +48,6 @@ class AIIDE:
         # self.temperature = 0.2
 
     def setup(self, messages = [],model="gpt-3.5-turbo",temperature=1.0,api_key=None):
-        self.tools_ = {}
-        # if not hasattr(self, "_cold_start"):
-        classes = find_inner_classes(self.__class__, AIIDE)
-        for each_class in classes:
-            "Setting parent as self for all classes"
-            exec("self." + each_class["class"].__name__ + ".parent = self")
-            "Creating instance for each tool sub class"
-            exec("self." + each_class["class"].__name__ + "= each_class['class']()")
-            "Check if the main function exist in the class"
-            if not hasattr(eval("self." + each_class["class"].__name__), "main") or not hasattr(eval("self." + each_class["class"].__name__), "tool_def"):
-                raise NotImplementedError(
-                    "main function or tool_def not implemented in class: "
-                    + "self."
-                    + each_class["class"].__name__
-                )
-            toolName = "self." + each_class["class"].__name__ + ".main"
-            toolName = "self." + each_class["class"].__name__ + ".tool_def['function']['name']"
-            self.tools_[eval(toolName)] = eval("self." + each_class["class"].__name__)
-
-            # print("tool func",inspect.isgeneratorfunction(eval(toolName)))
-        # if api_key is None:
-        #     api_key = os.environ.get("OPENAI_API_KEY")
-
-        # if api_key is None:
-        #     raise Exception(
-        #         "Expected an api_key argument or the OPENAI_API_KEY environment variable to be set!"
-        #     )
-        # self.client = OpenAI(api_key=api_key)
         self.api_key = api_key
         self._setup = True
         # else:
@@ -53,8 +55,8 @@ class AIIDE:
         self.model = model
         self.temperature = temperature
         self.messages = messages
-        if not hasattr(self,"ENV"):
-            warnings.warn("ENV is not defined. AIIDE will still continue to work without the RL-type features")
+        # if not hasattr(self,"ENV"):
+            # warnings.warn("ENV is not defined. AIIDE will still continue to work without the RL-type features")
 
     def chat(
         self,
@@ -125,22 +127,32 @@ class AIIDE:
         while True:
             # print("WHILE")
             active_messages = copy.deepcopy(self.messages)
-            if hasattr(self,"ENV"):
-                if len(self.ENV) != 0:
-                    added = False
-                    for index, each_active_message in reversed(list(enumerate(active_messages))):
-                        if each_active_message["role"] == "tool":
-                            active_messages[index]["content"] = (
-                                active_messages[index]["content"] + "\n" + '\n'.join(self.ENV)
-                            )
-                            added = True
-                            break
-                    if added == False:
-                        active_messages[0]["content"] += "\n" + '\n'.join(self.ENV)
+            # if hasattr(self,"ENV"):
+            #     if len(self.ENV) != 0:
+            #         added = False
+            #         for index, each_active_message in reversed(list(enumerate(active_messages))):
+            #             if each_active_message["role"] == "tool":
+            #                 active_messages[index]["content"] = (
+            #                     active_messages[index]["content"] + "\n" + '\n'.join(self.ENV)
+            #                 )
+            #                 added = True
+            #                 break
+            #         if added == False:
+            #             active_messages[0]["content"] += "\n" + '\n'.join(self.ENV)
+            # getting tools
             if tools and len(tools)>0:
-                tools__ = [self.tools_[key].tool_def for key in tools if key in self.tools_]
+                __tool_definations = []
+                __tool_function_mapping = {}
+                for var in vars(self):
+                    if isinstance(vars(self)[var],Tool):
+                        # print(f"Tool found: {var}")
+                        # calling tool_def
+                        tool_definition_json = vars(self)[var].tool_def()
+                        if tool_definition_json["function"]["name"]:
+                            __tool_definations.append(tool_definition_json)
+                            __tool_function_mapping[tool_definition_json["function"]["name"]] = vars(self)[var]
             else:
-                tools__ = None
+                __tool_definations = None
                 tool_choice = None
                 # print("->",tools__)
             # print(active_messages,tools__)
@@ -148,7 +160,7 @@ class AIIDE:
                     model=self.model,
                     # model="gpt-4-1106-preview",
                     messages=active_messages,
-                    tools=tools__,
+                    tools=__tool_definations,
                     tool_choice=tool_choice,  # auto is default, but we'll be explicit
                     max_tokens=4096,
                     stream=True,
@@ -156,11 +168,12 @@ class AIIDE:
                     stop = stop_words,
                     response_format=response_format,
                     api_key = self.api_key,
-                    parallel_tool_calls=True,
+                    # parallel_tool_calls=True,
 
             )
             response_text = ""
             temp_function_call = []
+            tool_yield = None
             for response_chunk in response_generator:
                 deltas = response_chunk.choices[0].delta
                 # print("deltas",deltas)
@@ -176,6 +189,9 @@ class AIIDE:
                 if deltas.tool_calls:
                     # print("func call")
                     if deltas.tool_calls[0].function.name:
+                        if tool_yield:
+                            yield {"type":"tool_call","name":temp_function_call[-1]["name"],"arguments":temp_function_call[-1]["arguments"]}
+                            tool_yield = None
                         # new function called
                         temp_function_call.append(
                             {
@@ -186,11 +202,15 @@ class AIIDE:
                         )
                     if deltas.tool_calls[0].function.arguments != "":
                         temp_function_call[-1]["arguments"] += deltas.tool_calls[0].function.arguments
+                        tool_yield = True
                 # if len(temp_function_call)> 0 and deltas.tools_calls[0].index != tool_index:
                 #     yield {"type":"tool","name":temp_function_call[-1]["name"],"arguments":temp_function_call[-1]["arguments"]}
                 #     tool_index = deltas.tools_calls[0].index
 
                 if response_chunk.choices[0].finish_reason:
+                    if tool_yield:
+                        yield {"type":"tool_call","name":temp_function_call[-1]["name"],"arguments":temp_function_call[-1]["arguments"]}
+                        tool_yield = None
                     # print("finish_reason",response_chunk.choices[0].finish_reason)
                     if response_chunk.choices[0].finish_reason == "tool_calls":
                         # calling functions
@@ -200,12 +220,12 @@ class AIIDE:
                         for each_func_call in temp_function_call:
                             yield {"type":"tool","name":each_func_call["name"],"arguments":each_func_call["arguments"]}
 
-                            sub = ""
-                            # console. print((each_tool["function"]['arguments']))
-                            args = json.loads(each_func_call["arguments"])
-                            function_to_call = self.tools_[
-                                each_func_call["name"]
-                            ].main
+                            # sub = ""
+                            # args = json.loads(each_func_call["arguments"])
+                            # function_to_call = self.tools_[
+                            #     each_func_call["name"]
+                            # ].main
+                            function_to_call = __tool_function_mapping[each_func_call["name"]].main
                             try:
                                 function_args = json.loads(each_func_call["arguments"])
                                 function_response = function_to_call(**function_args)
