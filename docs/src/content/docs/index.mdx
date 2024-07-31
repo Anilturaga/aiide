@@ -1,0 +1,37 @@
+---
+title: Welcome to AIIDE
+description: Get started building your docs site with Starlight.
+template: splash
+hero:
+  tagline: Live Components for your LLM
+  image:
+    file: ../../assets/houston.webp
+  actions:
+    - text: Get Started
+      link: /guides/example/
+      icon: right-arrow
+      variant: primary
+    - text: GitHub Repository
+      link: https://github.com/Anilturaga/aiide
+      icon: external
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## Next steps
+
+<CardGrid stagger>
+	<Card title="Reactive framework" icon="pencil">
+		Edit `src/content/docs/index.mdx` to see this page change.
+	</Card>
+	<Card title="Environments" icon="add-document">
+		Add Markdown or MDX files to `src/content/docs` to create new pages.
+	</Card>
+	<Card title="Intuitive Tool Definitions" icon="setting">
+		Edit your `sidebar` and other config in `astro.config.mjs`.
+	</Card>
+	<Card title="Multi-level Agents" icon="open-book">
+		Learn more in [the Starlight Docs](https://starlight.astro.build/).
+	</Card>
+	
+</CardGrid>
