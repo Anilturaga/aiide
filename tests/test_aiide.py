@@ -1,8 +1,8 @@
-from aiide import AIIDE, Tool
+from aiide import AIIDE, TOOL
 import json
 from aiide.tools import *
 def test_aiide_instance():
-    class Tool1(Tool):
+    class Tool1(TOOL):
         def __init__(self, parent):
             self.bool = False
             print(parent.outer_var)
@@ -41,7 +41,7 @@ def test_aiide_instance():
             self.ENV =[]
 
     agent = Agent()
-    for each in agent.chat("What's the weather like in San Francisco, Tokyo, and Paris?",completion="Hello. I am",tools=["get_current_weather"]):
+    for each in agent.chat("What's the weather like in San Francisco, Tokyo, and Paris?",completion="Hello. I am",tools=[agent.tool1], json_mode=False):
         print(each)
         if each["type"] == "tool" and "tokyo" in each["arguments"].lower():
             agent.tool1.bool = True

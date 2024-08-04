@@ -8,7 +8,7 @@ from litellm import completion as litellm_completion
 import litellm
 import abc
 litellm.drop_params=True
-class Tool(abc.ABC):
+class TOOL(abc.ABC):
     """
     This is a base class for tools in the AIIDE module.
     """
@@ -16,7 +16,7 @@ class Tool(abc.ABC):
     @abc.abstractmethod
     def __init__(self, parent):
         """
-        Initializes a new instance of the Tool class.
+        Initializes a new instance of the TOOL class.
 
         Parameters:
             parent (object): The parent class.
@@ -34,7 +34,7 @@ class Tool(abc.ABC):
     @abc.abstractmethod
     def main(self):
         """
-        The main method of the Tool class.
+        The main method of the TOOL class.
         """
         pass
 
@@ -47,7 +47,7 @@ class AIIDE:
         # self.model = "gpt-3.5-turbo"
         # self.temperature = 0.2
 
-    def setup(self, messages = [],model="gpt-3.5-turbo",temperature=1.0,api_key=None):
+    def setup(self, messages = [],model="gpt-4o",temperature=1.0,api_key=None):
         self.api_key = api_key
         self._setup = True
         # else:
@@ -65,7 +65,7 @@ class AIIDE:
         tools=None,
         stop_words=None,
         tool_choice="auto",
-        response_format = None
+        json_mode = False
     ):
         """
     Conversation with AIIDE.
@@ -73,9 +73,10 @@ class AIIDE:
     Args:
         user_message (str, optional): The message from the user to be processed.
         completion (str, optional): The completion of the Agent.
-        tools (list, optional): A list of tools names that can be used to assist with the conversation.
+        tools (list, optional): A list of tool instances to be used in the conversation.
         stop_words (list, optional): A list of words that should be considered as stop words for the agent response.
         tool_choice (str, optional): The strategy for choosing which tool to use. Can be "auto", "none", or "required". Defaults to "auto".
+        json_mode (bool, optional): If True, the function will return the response in JSON format. Defaults to False.
 
     Returns:
         yields dictionary with one of the following schema based on response type\n
@@ -99,7 +100,10 @@ class AIIDE:
                 "response":""
             }
     """
-
+        if json_mode:
+            response_format = { "type": "json_object" }
+        else:
+            response_format = None
         if not hasattr(self, "_setup"):
             raise Exception("Please call self.setup() in __init__")
         # self.setup()
@@ -143,19 +147,50 @@ class AIIDE:
             if tools and len(tools)>0:
                 __tool_definations = []
                 __tool_function_mapping = {}
-                for var in vars(self):
-                    if isinstance(vars(self)[var],Tool):
-                        # print(f"Tool found: {var}")
-                        # calling tool_def
-                        tool_definition_json = vars(self)[var].tool_def()
-                        if tool_definition_json["function"]["name"]:
-                            __tool_definations.append(tool_definition_json)
-                            __tool_function_mapping[tool_definition_json["function"]["name"]] = vars(self)[var]
+                # for var in vars(self):
+                #     if isinstance(vars(self)[var],Tool):
+                #         # print(f"Tool found: {var}")
+                #         # calling tool_def
+                #         tool_definition_json = vars(self)[var].tool_def()
+                #         if tool_definition_json["function"]["name"] in tools:
+                #             __tool_definations.append(tool_definition_json)
+                #             # checking if ENV variable is present in the tool class
+                #         if hasattr(vars(self)[var],"ENV"):
+                #             if len(vars(self)[var].ENV) != 0:
+                #                 # adding one element at a time of ENV to the tool responses in the active messages
+                #                 env_idx = 0
+                #                 for index, each_active_message in reversed(list(enumerate(active_messages))):
+                #                     if each_active_message["role"] == "tool" and each_active_message["name"] == tool_definition_json["function"]["name"]:
+                #                         active_messages[index]["content"] = (
+                #                             active_messages[index]["content"] + "\n" + vars(self)[var].ENV[env_idx]
+                #                         )
+                #                         env_idx += 1
+                #                         if env_idx == len(vars(self)[var].ENV):
+                #                             break
+                #         __tool_function_mapping[tool_definition_json["function"]["name"]] = vars(self)[var]
+                for each_tool_instance in tools:
+                    __tool_definations.append(each_tool_instance.tool_def())
+                    __tool_function_mapping[each_tool_instance.tool_def()["function"]["name"]] = each_tool_instance
+                    if hasattr(each_tool_instance,"ENV"):
+                        if len(each_tool_instance.ENV) != 0:
+                            reversed_env = each_tool_instance.ENV[::-1]
+                            # adding one element at a time of ENV to the tool responses in the active messages
+                            env_idx = 0
+                            for index, each_active_message in reversed(list(enumerate(active_messages))):
+                                if each_active_message["role"] == "tool" and each_active_message["name"] == each_tool_instance.tool_def()["function"]["name"]:
+                                    active_messages[index]["content"] = (
+                                        active_messages[index]["content"] + "\n" + reversed_env[env_idx]
+                                    )
+                                    env_idx += 1
+                                    if env_idx == len(reversed_env):
+                                        break
+                            if env_idx == 0:
+                                active_messages[0]["content"] += "\n" + '\n'.join(reversed_env)
             else:
                 __tool_definations = None
                 tool_choice = None
                 # print("->",tools__)
-            # print(active_messages,tools__)
+            # print(active_messages)
             response_generator = litellm_completion(
                     model=self.model,
                     # model="gpt-4-1106-preview",
@@ -190,7 +225,7 @@ class AIIDE:
                     # print("func call")
                     if deltas.tool_calls[0].function.name:
                         if tool_yield:
-                            yield {"type":"tool_call","name":temp_function_call[-1]["name"],"arguments":temp_function_call[-1]["arguments"]}
+                            yield {"type":"tool_call","name":temp_function_call[-1]["name"],"arguments":temp_function_call[-1]["arguments"],"finish":False}
                             tool_yield = None
                         # new function called
                         temp_function_call.append(
@@ -209,7 +244,7 @@ class AIIDE:
 
                 if response_chunk.choices[0].finish_reason:
                     if tool_yield:
-                        yield {"type":"tool_call","name":temp_function_call[-1]["name"],"arguments":temp_function_call[-1]["arguments"]}
+                        yield {"type":"tool_call","name":temp_function_call[-1]["name"],"arguments":temp_function_call[-1]["arguments"],"finish":True}
                         tool_yield = None
                     # print("finish_reason",response_chunk.choices[0].finish_reason)
                     if response_chunk.choices[0].finish_reason == "tool_calls":
@@ -218,7 +253,8 @@ class AIIDE:
                         temp_func_call_reponses = []
 
                         for each_func_call in temp_function_call:
-                            yield {"type":"tool","name":each_func_call["name"],"arguments":each_func_call["arguments"]}
+                            #! Temporarily disabled yielding of tool calls right before execution
+                            # yield {"type":"tool","name":each_func_call["name"],"arguments":each_func_call["arguments"]}
 
                             # sub = ""
                             # args = json.loads(each_func_call["arguments"])
