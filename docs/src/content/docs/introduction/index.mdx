@@ -1,0 +1,35 @@
+---
+title: Introduction
+description: A guide in my new Starlight docs site.
+---
+
+AIIDE is a framework for developing highly capable LLM agents while being developer-friendly.
+
+AIIDE focuses on the following aspects:
+1. Tools should be able to scale from complex tasks(code interpreter) to nested agent interactions.
+2. Agents generally work on a piece of data. ex: data transformation on a dataframe, editing a code file or editing images.
+    * As the agent performs actions using tools, we produce versions of the data. These versions are called Environments in AIIDE. 
+    * We pass a selected number of these versions of data(last 3 dataframes, current state of the code file) to the LLM as context.
+3. An easy API for streaming will help build great user experiences.
+
+
+## Get Started
+There are couple of ways to get started with AIIDE:
+
+import { LinkCard } from '@astrojs/starlight/components';
+
+<LinkCard
+  title="Tutorial"
+  description="Build an intelligent task management assistant that you might actually use in your daily life."
+  href="/tutorial/example"
+/>
+{/* <LinkCard
+  title="Concepts"
+  description="Understand the core concepts of AIIDE."
+  href="/concepts/aiide"
+/>
+<LinkCard
+  title="How-to Guides"
+  description="Learn how to build different types of agents with varying complexity."
+  href="/concepts/aiide"
+/> */}

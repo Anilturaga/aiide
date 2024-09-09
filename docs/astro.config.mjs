@@ -11,16 +11,36 @@ export default defineConfig({
 			},
 			sidebar: [
 				{
-					label: 'Guides',
-					items: [
-						// Each item here is one entry in the navigation menu.
-						{ label: 'Example Guide', slug: 'guides/example' },
-					],
+					label: 'Introduction',
+					slug: 'introduction/index',
 				},
 				{
-					label: 'Reference',
-					autogenerate: { directory: 'reference' },
+					label: 'Tutorial',
+					items: [
+						// Each item here is one entry in the navigation menu.
+						{ label: 'Task Management Assistant', slug: 'tutorial/example' },
+					],
 				},
+				// {
+				// 	label: 'Conceptual Guide',
+				// 	items: [
+				// 		// Each item here is one entry in the navigation menu.
+				// 		{ label: 'AIIDE Chat', slug: 'concepts/aiide' },
+				// 		{ label: 'Tools', slug: 'concepts/tool' },
+				// 		{ label: 'Tool Helpers', slug: 'concepts/tool_def' },
+				// 	],
+				// },
+				// {
+				// 	label: 'How-To Guides',
+				// 	items: [
+				// 		// Each item here is one entry in the navigation menu.
+				// 		{ label: 'ReAct Agent', slug: 'guides/react' },
+				// 	],
+				// },
+				// {
+				// 	label: 'Reference',
+				// 	autogenerate: { directory: 'reference' },
+				// },
 			],
 		}),
 	],

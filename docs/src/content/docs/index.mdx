@@ -1,14 +1,14 @@
 ---
-title: Welcome to AIIDE
-description: Get started building your docs site with Starlight.
+title: Add Live Components to your LLM
+description: AIIDE is a reactive and scalable framework for LLM Copilots that work beyond demos
 template: splash
 hero:
-  tagline: Live Components for your LLM
+  tagline: Reactive and Scalable Framework for Copilots that Work
   image:
-    file: ../../assets/houston.webp
+    file: ../../assets/aiide_flow.png
   actions:
-    - text: Get Started
-      link: /guides/example/
+    - text: Documentation
+      link: /introduction
       icon: right-arrow
       variant: primary
     - text: GitHub Repository
@@ -16,22 +16,44 @@ hero:
       icon: external
 ---
 
-import { Card, CardGrid } from '@astrojs/starlight/components';
+# What is this?
 
-## Next steps
+* LLMs by themselves can only provide you with the information they have been trained on
 
-<CardGrid stagger>
-	<Card title="Reactive framework" icon="pencil">
-		Edit `src/content/docs/index.mdx` to see this page change.
+* LLMs with Tools can fetch information, perform computations, and more on fixed piece of information/data
+
+* LLMs with Environments can work alongside you in sync, fetching latest information and performing actions. Ex: Copilot of Code, Calender, Image editing etc.
+
+# How does it work?
+<CardGrid>
+<Card title="Simple view" >
+		{/* > Pandas agent is now the defacto tool for any computational analysis but it's not modular. */}
+![AIIDE Flow](../../assets/aiide_flow.png)
 	</Card>
-	<Card title="Environments" icon="add-document">
-		Add Markdown or MDX files to `src/content/docs` to create new pages.
+	<Card title="Advanced workflow" >
+		{/* > Pandas agent is now the defacto tool for any computational analysis but it's not modular. */}
+![AIIDE Flow](../../assets/aiide_flow_big.png)
 	</Card>
-	<Card title="Intuitive Tool Definitions" icon="setting">
-		Edit your `sidebar` and other config in `astro.config.mjs`.
+</CardGrid>
+
+
+import { Card, CardGrid,Code } from '@astrojs/starlight/components';
+
+{/* <Code code="pip3 install aiide" lang="bash" title="Install" mark={['aiide']} /> */}
+## Features
+<CardGrid>
+	<Card title="Tools are first class citizens" icon="seti:html">
+		Tools are defined as classes to enable defining complex logic with memory.
+		{/* > Pandas agent is now the defacto tool for any computational analysis but it's not modular. */}
 	</Card>
-	<Card title="Multi-level Agents" icon="open-book">
-		Learn more in [the Starlight Docs](https://starlight.astro.build/).
+	<Card title="Tools act on Environments" icon="laptop">
+		Inspired from Reinforcement Learning, provide snapshots of Environments to the LLM to work on.
+		{/* > Environments could be `code files`, `data tables`, `images`  etc. */}
 	</Card>
-	
+	<Card title="Reactive framework" icon="puzzle">
+		Bi-directional access between the tools and the chat instance.
+	</Card>
+	<Card title="Streaming made intuitive" icon="rocket">
+		Simple but powerful streaming API to build great user experiences.
+	</Card>
 </CardGrid>
