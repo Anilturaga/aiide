@@ -33,14 +33,14 @@ class Tool(abc.ABC):
         """
         This method is called every time an LLM call is made.
         """
-        pass
+        return {}
 
     @abc.abstractmethod
     def main(self):
         """
         The main method of the TOOL class.
         """
-        pass
+        return str("")
 
 
 class Aiide:
@@ -55,10 +55,10 @@ class Aiide:
 
     def setup(
         self,
-        system_message: str|None=None,
-        model: str="gpt-4o-mini-2024-07-18",
-        temperature: float=1.0,
-        api_key: str=None,
+        system_message: str | None = None,
+        model: str = "gpt-4o-mini-2024-07-18",
+        temperature: float = 1.0,
+        api_key: str | None = None,
         **kwargs
     ):
         """
@@ -74,39 +74,38 @@ class Aiide:
         self._setup = True
         self._model = model
         self._temperature = temperature
-        self._messages: list = [
-            {"role": "system", "content": system_message}
-        ]
+        self._messages: list = [{"role": "system", "content": system_message}]
         self.messages = create_messages_dataframe(self._messages)
         self._kwargs = kwargs
         # if not hasattr(self,"ENV"):
         # warnings.warn("ENV is not defined. AIIDE will still continue to work without the RL-type features")
 
-    def restore_conversation(self,messages: pd.DataFrame | list):
+    def restore_conversation(self, messages: pd.DataFrame | list):
         """
         Restore the AIIDE instance with the previous messages.
 
         Args:
             messages (list | pd.DataFrame): Either an aiide DataFrame or a list of messages compatible with OpenAI schema.
         """
-        self._messages = messages
         if type(messages) == list:
+            self._messages = messages
             self.messages = create_messages_dataframe(messages)
         elif type(messages) == pd.DataFrame:
             self.messages = messages
+            self._messages = messages.aiide.to_openai_dict()
 
     def structured_ouputs(self):
         """
         Structured Outputs is a feature that ensures the model will always generate responses in a specific format. Return JSON Schema definition for the generation.
         """
-        return None
+        return {}
 
     def chat(
         self,
-        user_message: str | list | dict = None,
-        completion: str = None,
-        tools: list = None,
-        stop_words: list = None,
+        user_message: str | list | dict | None = None,
+        completion: str | None = None,
+        tools: list | None = None,
+        stop_words: list | None = None,
         tool_choice: str = "auto",
         json_mode: bool = False,
     ):
@@ -213,79 +212,26 @@ class Aiide:
         # print(self.messages.aiide.to_openai_dict())
         while True:
             tool_runs = 0
-            # print(self.messages)
-            # self.messages.to_csv("idk.csv")
-            # with open("idk.json","w") as f:
-            # f.write(json.dumps(self.messages.aiide.to_openai_dict()))
-            # print("WHILE")
-            # active_messages = copy.deepcopy(self._messages)
-            # if hasattr(self,"ENV"):
-            #     if len(self.ENV) != 0:
-            #         added = False
-            #         for index, each_active_message in reversed(list(enumerate(active_messages))):
-            #             if each_active_message["role"] == "tool":
-            #                 active_messages[index]["content"] = (
-            #                     active_messages[index]["content"] + "\n" + '\n'.join(self.ENV)
-            #                 )
-            #                 added = True
-            #                 break
-            #         if added == False:
-            #             active_messages[0]["content"] += "\n" + '\n'.join(self.ENV)
             # getting tools
             if tools and len(tools) > 0:
                 __tool_definations = []
                 __tool_function_mapping = {}
-                # for var in vars(self):
-                #     if isinstance(vars(self)[var],Tool):
-                #         # print(f"Tool found: {var}")
-                #         # calling tool_def
-                #         tool_definition_json = vars(self)[var].tool_def()
-                #         if tool_definition_json["function"]["name"] in tools:
-                #             __tool_definations.append(tool_definition_json)
-                #             # checking if ENV variable is present in the tool class
-                #         if hasattr(vars(self)[var],"ENV"):
-                #             if len(vars(self)[var].ENV) != 0:
-                #                 # adding one element at a time of ENV to the tool responses in the active messages
-                #                 env_idx = 0
-                #                 for index, each_active_message in reversed(list(enumerate(active_messages))):
-                #                     if each_active_message["role"] == "tool" and each_active_message["name"] == tool_definition_json["function"]["name"]:
-                #                         active_messages[index]["content"] = (
-                #                             active_messages[index]["content"] + "\n" + vars(self)[var].ENV[env_idx]
-                #                         )
-                #                         env_idx += 1
-                #                         if env_idx == len(vars(self)[var].ENV):
-                #                             break
-                #         __tool_function_mapping[tool_definition_json["function"]["name"]] = vars(self)[var]
                 for each_tool_instance in tools:
                     __tool_definations.append(each_tool_instance.tool_def())
                     __tool_function_mapping[
                         each_tool_instance.tool_def()["function"]["name"]
                     ] = each_tool_instance
-                    # if hasattr(each_tool_instance,"ENV"):
-                    #     if len(each_tool_instance.ENV) != 0:
-                    #         reversed_env = each_tool_instance.ENV[::-1]
-                    #         # adding one element at a time of ENV to the tool responses in the active messages
-                    #         env_idx = 0
-                    #         for index, each_active_message in reversed(list(enumerate(active_messages))):
-                    #             if each_active_message["role"] == "tool" and each_active_message["name"] == each_tool_instance.tool_def()["function"]["name"]:
-                    #                 active_messages[index]["content"] = (
-                    #                     active_messages[index]["content"] + "\n" + reversed_env[env_idx]
-                    #                 )
-                    #                 env_idx += 1
-                    #                 if env_idx == len(reversed_env):
-                    #                     break
-                    #         if env_idx == 0:
-                    #             active_messages[0]["content"] += "\n" + '\n'.join(reversed_env)
+
             else:
                 __tool_definations = None
-                tool_choice = None
+                tool_choice = None  # type: ignore
                 # print("->",tools__)
             # print(active_messages)
             if json_mode:
                 # calling structured_output function
                 schema = self.structured_ouputs()
-                if schema != None:
-                    response_format["json_schema"] = schema
+                if schema != {}:
+                    response_format["json_schema"] = schema  # type: ignore
                     # response_format["strict"] = True
 
             response_generator = litellm_completion(
@@ -310,7 +256,7 @@ class Aiide:
             for response_chunk in response_generator:
                 self.messages.reset_index(drop=True, inplace=True)
 
-                deltas = response_chunk.choices[0].delta
+                deltas = response_chunk.choices[0].delta  # type: ignore
                 # print("deltas",deltas)
                 if deltas.content:
                     # print(deltas.content)
@@ -396,11 +342,8 @@ class Aiide:
                             0
                         ].function.arguments
                         tool_yield = True
-                # if len(temp_function_call)> 0 and deltas.tools_calls[0].index != tool_index:
-                #     yield {"type":"tool","name":temp_function_call[-1]["name"],"arguments":temp_function_call[-1]["arguments"]}
-                #     tool_index = deltas.tools_calls[0].index
 
-                if response_chunk.choices[0].finish_reason:
+                if response_chunk.choices[0].finish_reason:  # type: ignore
                     if tool_yield:
                         # adding the tool call row to self.messages
                         self.messages = pd.concat(
@@ -433,7 +376,7 @@ class Aiide:
                         }
                         tool_yield = None
                     # print("finish_reason",response_chunk.choices[0].finish_reason)
-                    if response_chunk.choices[0].finish_reason == "tool_calls":
+                    if response_chunk.choices[0].finish_reason == "tool_calls":  # type: ignore
                         # calling functions
                         # print("calling funcs", temp_function_call)
                         temp_func_call_reponses = []
@@ -442,12 +385,7 @@ class Aiide:
                             #! Temporarily disabled yielding of tool calls right before execution
                             # yield {"type":"tool","name":each_func_call["name"],"arguments":each_func_call["arguments"]}
 
-                            # sub = ""
-                            # args = json.loads(each_func_call["arguments"])
-                            # function_to_call = self.tools_[
-                            #     each_func_call["name"]
-                            # ].main
-                            function_to_call = __tool_function_mapping[
+                            function_to_call = __tool_function_mapping[  # type: ignore
                                 each_func_call["name"]
                             ].main
                             try:
@@ -455,7 +393,7 @@ class Aiide:
                                 function_response = function_to_call(**function_args)
                             except Exception as e:
                                 # remove prefix string upto first () from error message
-                                e = str(e).split(")", 1)[1]
+                                e = str(e).split(')', 1)[1]
                                 function_response = (
                                     "Error in function call:\n"
                                     + str(e)
@@ -480,7 +418,6 @@ class Aiide:
                                     "content": function_response,
                                 }
                             )
-                            # print("function_response",function_response,"tool_call_id",each_func_call["tool_call_id"],self.messages)
                             # finding the tool call row in the self.messages dataframe and adding the response
                             # iterating over rows
                             for index, row in self.messages.iterrows():
@@ -490,7 +427,7 @@ class Aiide:
                                     == each_func_call["tool_call_id"]
                                 ):
                                     # updating the response
-                                    self.messages.loc[index, "response"] = (
+                                    self.messages.loc[index, "response"] = (  # type: ignore
                                         function_response
                                     )
                                     break
@@ -507,7 +444,7 @@ class Aiide:
                             if tool_runs > 0:
                                 # warnings.warn("Tools have been called 100 times consecutively. If this is the expected behaviour, please raise an issue on our GitHub Repository!")
                                 return
-                    elif response_chunk.choices[0].finish_reason == "length":
+                    elif response_chunk.choices[0].finish_reason == "length":  # type: ignore
                         self._messages.append(temp_assistant_response)
                         warnings.warn(
                             "Output token limit reached. Continuing the generation."
@@ -517,8 +454,6 @@ class Aiide:
                         if len(temp_assistant_response["tool_calls"]) == 0:
                             del temp_assistant_response["tool_calls"]
                         self._messages.append(temp_assistant_response)
-                        # self.messages.to_csv("idk.csv")
-                        # with open("idk.json","w") as f:
-                        # f.write(json.dumps(self.messages.aiide.to_openai_dict()))
+
                         return
         return

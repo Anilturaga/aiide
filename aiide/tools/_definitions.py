@@ -184,7 +184,7 @@ class Object:
         Returns:
             dict: The JSON schema for this dictionary field.
         """
-        schema = {"type": "object"}
+        schema: dict = {"type": "object"}
         if self.description:
             schema["description"] = self.description
         if self.properties:

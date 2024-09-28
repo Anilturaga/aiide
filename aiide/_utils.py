@@ -207,6 +207,7 @@ class CustomConverter:
                 )
             elif row["role"] == "tool":
                 # finding the index of the last assistant message
+                i = 0
                 for i in range(len(openai_json["messages"]) - 1, -1, -1):
                     if openai_json["messages"][i]["role"] == "user":
                         i = 0
