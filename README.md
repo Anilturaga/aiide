@@ -6,7 +6,7 @@
 
 aiide is a framework to build LLM copilots.
 
-aiide is born out of 3 years of experience building LLM applications starting from GPT-3 completion models to the latest frontier chat models.
+It is born out of 3 years of experience building LLM applications starting from GPT-3 completion models to the latest frontier chat models.
 
 | What you get with aiide? | What's not part of aiide? |
 |--------------------------|--------------------------|
@@ -82,7 +82,7 @@ When you pass a dict for user_message in aiide, it will only pass in the values 
 
 A natural question for the above snippet is how do we track the chat history?
 
-aiide has first-class support for memory. We have found that handling OpenAI JSON based schema is cumbersome and error-prone. So, we have abstracted the chat history into a pandas DataFrame.
+aiide has first-class support for memory. I found that handling OpenAI JSON based schema is cumbersome and error-prone. So, I had abstracted the chat history into a Pandas DataFrame.
 
 `messages` is a pandas DataFrame that stores all the messages, tool calls and responses of a chat session. 
 
