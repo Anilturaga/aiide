@@ -1,5 +1,5 @@
 __version__ = "0.0.4"
 
-from . import tools
+from . import schema
 
 from ._aiide import Aiide, Tool

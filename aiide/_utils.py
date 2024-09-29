@@ -1,4 +1,5 @@
 import inspect
+from PIL import Image
 from pandas.api.extensions import register_dataframe_accessor
 
 
@@ -48,6 +49,8 @@ def create_messages_dataframe(messages):
             "response": [],
         }
     )
+    if not messages:
+        return df_messages
     # iterate through the messages
     for each_message in messages:
         if "role" in each_message:
@@ -128,6 +131,41 @@ def create_messages_dataframe(messages):
         # reset the index
         df_messages.reset_index(drop=True, inplace=True)
     return df_messages
+def content_transformer(content):
+    if type(content) == str:
+        return content
+    elif isinstance(content, Image.Image):
+        return [{"type": "image_url", "image_url":{"url": image_to_base64(content)}}]
+    
+    elif type(content) == list:
+        rcontent = []
+        for each_content in content:
+            if type(each_content) == str:
+                rcontent.append({"type": "text", "text": each_content})
+            elif isinstance(each_content, Image.Image):
+                # convert the PIL image to base64
+                rcontent.append(
+                    {
+                        "type": "image_url",
+                        "image_url":{"url": image_to_base64(each_content)},
+                    }
+                )
+        return rcontent
+    elif type(content) == dict:
+        rcontent = []
+        for key, value in content.items():
+            if isinstance(value, Image.Image):
+                rcontent.append(
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": image_to_base64(value)},
+                    }
+                )
+            elif type(value) == str:
+                rcontent.append({"type": "text", "text": value})
+            else:
+                raise ValueError(f"Invalid type {type(value)}")
+        return rcontent
 
 @register_dataframe_accessor("aiide")
 class CustomConverter:
@@ -137,66 +175,18 @@ class CustomConverter:
         self.df_messages.reset_index(drop=True, inplace=True)
 
     def to_openai_dict(self):
-        from PIL import Image
         openai_json = {
             "messages": [],
         }
         for index, row in self.df_messages.iterrows():
             if row["role"] == "user" or row["role"] == "system":
-                if type(row["content"]) == str:
-                    openai_json["messages"].append(
-                        {
-                            "role": row["role"],
-                            "content": row["content"],
-                        }
-                    )
-                elif isinstance(row["content"], Image.Image):
-                    openai_json["messages"].append(
-                        {
-                            "role": row["role"],
-                            "content": [{"type": "image_url", "image_url":{"url": image_to_base64(row["content"])}}],
-                        }
-                    )
-                
-                elif type(row["content"]) == list:
-                    content = []
-                    for each_content in row["content"]:
-                        if type(each_content) == str:
-                            content.append({"type": "text", "text": each_content})
-                        elif isinstance(each_content, Image.Image):
-                            # convert the PIL image to base64
-                            content.append(
-                                {
-                                    "type": "image_url",
-                                    "image_url":{"url": image_to_base64(each_content)},
-                                }
-                            )
-                    openai_json["messages"].append(
-                        {
-                            "role": row["role"],
-                            "content": content,
-                        }
-                    )
-                elif type(row["content"]) == dict:
-                    content = []
-                    for key, value in row["content"].items():
-                        if isinstance(value, Image.Image):
-                            content.append(
-                                {
-                                    "type": "image_url",
-                                    "image_url": {"url": image_to_base64(value)},
-                                }
-                            )
-                        elif type(value) == str:
-                            content.append({"type": "text", "text": value})
-                        else:
-                            raise ValueError(f"Invalid type {type(value)}")
-                    openai_json["messages"].append(
-                        {
-                            "role": row["role"],
-                            "content": content,
-                        }
-                    )
+                content = content_transformer(row["content"])
+                openai_json["messages"].append(
+                    {
+                        "role": row["role"],
+                        "content": content,
+                    }
+                )
             elif row["role"] == "assistant":
                 openai_json["messages"].append(
                     {
@@ -243,7 +233,7 @@ class CustomConverter:
                         "role": "tool",
                         "tool_call_id": row["content"]["id"],
                         "name": row["content"]["name"],
-                        "content": row["response"],
+                        "content": content_transformer(row["response"]),
                     }
                 )
         return openai_json["messages"]

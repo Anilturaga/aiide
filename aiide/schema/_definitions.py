@@ -8,7 +8,9 @@ class Num:
         enums (list, optional): A list of allowed values for the field.
     """
 
-    def __init__(self, name, description=None, enums=None):
+    def __init__(
+        self, name: str, description: str | None = None, enums: list | None = None
+    ):
         self.name = name
         self.description = description
         self.enums = enums
@@ -38,7 +40,9 @@ class Float:
         enums (list, optional): A list of allowed values for the field.
     """
 
-    def __init__(self, name, description=None, enums=None):
+    def __init__(
+        self, name: str, description: str | None = None, enums: list | None = None
+    ):
         self.name = name
         self.description = description
         self.enums = enums
@@ -68,7 +72,9 @@ class Str:
         enums (list, optional): A list of allowed values for the field.
     """
 
-    def __init__(self, name, description=None, enums=None):
+    def __init__(
+        self, name: str, description: str | None = None, enums: list | None = None
+    ):
         self.name = name
         self.description = description
         self.enums = enums
@@ -98,7 +104,9 @@ class Bool:
         enums (list, optional): A list of allowed values for the field.
     """
 
-    def __init__(self, name, description=None, enums=None):
+    def __init__(
+        self, name: str, description: str | None = None, enums: list | None = None
+    ):
         self.name = name
         self.description = description
         self.enums = enums
@@ -118,40 +126,6 @@ class Bool:
         return {self.name: schema}
 
 
-class Array:
-    """
-    Defines a list field for a JSON schema.
-
-    Attributes:
-        name (str): The name of the field.
-        description (str, optional): A description of the field.
-        item (object, optional): An object representing the type of items in the list.
-        enums (list, optional): A list of allowed values for the field.
-    """
-
-    def __init__(self, name, description=None, item=None, enums=None):
-        self.name = name
-        self.description = description
-        self.items = item
-        self.enums = enums
-
-    def json(self):
-        """
-        Returns a dictionary representing the JSON schema for this list field.
-
-        Returns:
-            dict: The JSON schema for this list field.
-        """
-        schema = {"type": "array"}
-        if self.description:
-            schema["description"] = self.description
-        if self.items:
-            schema["items"] = next(iter(self.items.json().values()))
-        if self.enums:
-            schema["enum"] = self.enums
-        return {self.name: schema}
-
-
 class Object:
     """
     Defines a dictionary field for a JSON schema.
@@ -165,10 +139,10 @@ class Object:
 
     def __init__(
         self,
-        name,
-        description=None,
-        properties=[],
-        enums=None,
+        name: str,
+        description: str | None = None,
+        properties: list = [],
+        enums: list | None = None,
         required: list[str] | None = None,
     ):
         self.name = name
@@ -199,6 +173,46 @@ class Object:
         return {self.name: schema}
 
 
+class Array:
+    """
+    Defines a list field for a JSON schema.
+
+    Attributes:
+        name (str): The name of the field.
+        description (str, optional): A description of the field.
+        item (object, optional): An object representing the type of items in the list.
+        enums (list, optional): A list of allowed values for the field.
+    """
+
+    def __init__(
+        self,
+        name: str,
+        description: str | None = None,
+        item: Str | Num | Float | Bool | Object | None = None,
+        enums: list | None = None,
+    ):
+        self.name = name
+        self.description = description
+        self.items = item
+        self.enums = enums
+
+    def json(self):
+        """
+        Returns a dictionary representing the JSON schema for this list field.
+
+        Returns:
+            dict: The JSON schema for this list field.
+        """
+        schema = {"type": "array"}
+        if self.description:
+            schema["description"] = self.description
+        if self.items:
+            schema["items"] = next(iter(self.items.json().values()))
+        if self.enums:
+            schema["enum"] = self.enums
+        return {self.name: schema}
+
+
 class AnyOf:
     """
     Defines an anyOf field for a JSON schema.
@@ -209,7 +223,7 @@ class AnyOf:
         options (list): A list of objects representing the possible types.
     """
 
-    def __init__(self, name, options):
+    def __init__(self, name: str, options: list):
         self.name = name
         self.options = options
 
@@ -226,7 +240,12 @@ class AnyOf:
         return {self.name: schema}
 
 
-def tool_def_gen(name, description=None, properties=[], required=None):
+def tool_def_gen(
+    name: str,
+    description: str | None = None,
+    properties: list = [],
+    required: list | None = None,
+):
     """
     Defines the JSON schema for an OpenAI function call definition.
 
@@ -255,7 +274,10 @@ def tool_def_gen(name, description=None, properties=[], required=None):
         schema["function"]["parameters"]["required"] = required
     return schema
 
-def structured_outputs_gen(name, properties=[], required: list[str] | None = []):
+
+def structured_outputs_gen(
+    name: str, properties: list = [], required: list[str] | None = []
+):
     """
     Defines the JSON Schema for the OpenAI structured outputs definition.
 

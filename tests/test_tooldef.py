@@ -1,4 +1,4 @@
-from aiide.tools import *
+from aiide.schema import *
 
 def test_weather_tooldef():
     aiide_tooldef = tool_def_gen(

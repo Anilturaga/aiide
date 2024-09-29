@@ -1,13 +1,12 @@
 from aiide import Aiide, Tool
 import json
-from aiide.tools import tool_def_gen, structured_outputs_gen, AnyOf, Str, Array
-
+from aiide.schema import tool_def_gen, structured_outputs_gen, AnyOf, Str, Array
+import random
 
 def test_aiide_instance():
-    class Tool1(Tool):
+    class WeatherTool(Tool):
         def __init__(self, parent):
             self.bool = False
-            print(parent.outer_var)
 
         def tool_def(self):
             return tool_def_gen(
@@ -27,26 +26,11 @@ def test_aiide_instance():
             if self.bool:
                 return json.dumps({"error": 404})
             else:
-                if "tokyo" in location.lower():
-                    return json.dumps(
-                        {"location": "Tokyo", "temperature": "10", "unit": unit}
-                    )
-                elif "san francisco" in location.lower():
-                    return json.dumps(
-                        {"location": "San Francisco", "temperature": "72", "unit": unit}
-                    )
-                elif "paris" in location.lower():
-                    return json.dumps(
-                        {"location": "Paris", "temperature": "22", "unit": unit}
-                    )
-                else:
-                    return json.dumps({"location": location, "temperature": "unknown"})
+                return json.dumps({"location": location, "temperature": random.randint(0, 100), "unit": unit})
 
     class Agent(Aiide):
         def __init__(self):
-            # super().__init__()
-            self.outer_var = 15
-            self.tool1 = Tool1(self)
+            self.weatherTool = WeatherTool(self)
             self.setup(
                 system_message="You are a helpful assistant.",
             )
@@ -55,16 +39,13 @@ def test_aiide_instance():
     for each in agent.chat(
         # "What's the weather like in San Francisco, Tokyo, and Paris?\nCall the tool only once with all three locations.",
         "What's the weather like in San Francisco, Tokyo, and Paris?\nCall the tool three times with all three locations.",
-        completion="Hello. I am",
-        tools=[agent.tool1],
-        json_mode=False,
-        tool_choice="required",
+        tools=[agent.weatherTool],
     ):
         print(each)
         if each["type"] == "tool" and "tokyo" in each["arguments"].lower():
-            agent.tool1.bool = True
+            agent.weatherTool.bool = True
         else:
-            agent.tool1.bool = False
+            agent.weatherTool.bool = False
 
 def test_aiide_anyof():
     class Tool1(Tool):
@@ -280,6 +261,31 @@ def test_aiide_input_dict():
     ):
         print(each)
 
+def test_aiide_readme():
+    from  aiide  import  Aiide
+    from aiide.schema import structured_outputs_gen, Str, AnyOf, Array
+
+    class Chatbot(Aiide):
+        def  __init__(self):
+            self.setup(system_message="You are a helpful assistant.", model="gpt-4o-mini-2024-07-18")
+        def structured_ouputs(self):
+            return structured_outputs_gen(
+                name="chain_of_thought",
+                properties=[
+                    Str(name="thinking", description="Use this field to think out loud. Breakdown the user's query, plan your response, etc."),
+                    Str(name="response"),
+                ],
+                required=["thinking", "response"],
+            )
+
+    agent = Chatbot()
+    while True:
+        user_input = input("\nSend a message: ")
+        if user_input == "exit":
+            break
+        for delta in agent.chat(user_message=user_input,json_mode=True):
+            if delta["type"] == "text":
+                print(delta["delta"],end="")
 
 # Test none for tool choice
 # Test for no ENV

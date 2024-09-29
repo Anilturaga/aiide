@@ -4,200 +4,239 @@
 </picture></div>
 <br/>
 
+aiide is a framework to build LLM copilots.
 
-**[`aiide`](https://github.com/Anilturaga/aiide)** facilitates the creation of reinforcement learning (RL)-type environments for large language models (LLMs). It allows you to define and manage live data structures (components) that collectively form the environment (ENV). The LLM can interact with and modify these components by using user provided tools. After each action, along with the tool response, aiide adds the latest snapshot/state of all ENV components and removes all older ENV snapshots from the LLM's memory.
+aiide is born out of 3 years of experience building LLM applications starting from GPT-3 completion models to the latest frontier chat models.
 
-<div align="center"><picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/Anilturaga/aiide/blob/main/assets/figures/aiide_overview.png?raw=true">
-  <img alt="AIIDE Overview" src="https://github.com/Anilturaga/aiide/blob/main/assets/figures/aiide_overview.png?raw=true" width=500">
-</picture></div>
-<br/>
-ENV states are made available to the LLM in the following way:
-<div align="center"><picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/figures/aiide_memory_logic.png">
-  <img alt="AIIDE Memory updates" src="https://github.com/Anilturaga/aiide/blob/main/assets/figures/aiide_memory_logic.png?raw=true" width=700">
-</picture></div>
-<br/>
+| What you get with aiide? | What's not part of aiide? |
+|--------------------------|--------------------------|
+| Full control over content sent to the LLM | Verbose abstractions for common prompting techniques |
+| Tools and structured outputs are first class citizens for actions and content generation | Chains as a core building block |
+| Simplified streaming by default to build real-time apps | Output parsing tools |
+| Messages history is a Pandas DataFrame | Complex nested JSON objects |
 
-### Tutorial
-Let's build a simple form filling agent. We have a pandas dataframe with field names and we want the LLM to ask the user for answers to a couple of questions at a time and populate the said dataframe.
 
-Here
-* The environment is the dataframe
-* We need a single tool that enables the LLM to add or edit values for any of the fields
-* _The library will automatically provide the latest snapshot of the dataframe to the LLM.(aiide will automatically remove older snapshots of the dataframe from the LLM memory to avoid confusing it and saving tokens)_
+## Table of Contents
+* [Installation](#installation)
+* [Chat](#chat)
+* [Memory](#memory)
+* [Structured Outputs](#structured-outputs)
+* [Tools](#tools)
+* [JSON Schema](#json-schema)
+* [Misc](#misc)
 
-0. Install the package<br/>
+## Installation
+Let's start by installing the package.
 ```bash
 pip install aiide
 ```
+This also installs LiteLM and Pandas by default. If you would like to use other LLM providers such as Anthropic or Google AI, please install the respective SDK as well.
 
-1. Let's start with defining a simple chat agent
+The whole tutorial uses OpenAI models but it should work with all the popular LLM providers.
+
+## Chat
+Now that aiide is installed, let's create a simple chatbot similar to ChatGPT free tier.
 
 ```python
-# Import the AIIDE class
-from aiide import AIIDE
-# Import helper classes for defining functions for the LLM
-from aiide.tools import TOOL_DEF, INT, FLOAT, STR, BOOL, LIST, DICT
+from aiide import Aiide
 
-import pandas as pd
-# Define a class and inherit the AIIDE class
-class FormFillingAgent(AIIDE):
-    def __init__(self):
-        # Let's define a dummy dataframe with fields and value as the columns
-        self.df = pd.DataFrame({
-            "Field":["name","age","gender","email","city","job","married"],
-            "Value":["Not yet assigned" for i in range(7)]
-        })
+class Chatbot(Aiide):
+	def  __init__(self):
+		self.setup(system_message="You are a helpful assistant.", model="gpt-4o-mini-2024-07-18")
 
-        # Here we only have one component and providing it as the element for the reserved ENV array
-        self.ENV =[self.df.to_markdown(index=False)]
-
-        # use setup to define the system message, type of model, temperature etc
-        self.setup(messages=[{"role":"system","content":"You are a helpful assistant. Fill the form table attached by asking the user to answer a couple of fields from the table at a time."}],model="gpt-3.5-turbo",temperature=0.2)
-```
-> Set your openai key as `OPENAI_API_KEY` enviroment variable or pass it in setup as api_key
-
-2. Let's define the tool. We have to define the tool as a class inside our `FormFillingAgent` class
-```python
-class FormFillingAgent(AIIDE):
-    def __init__(self):
-        ...
-    class Tool:
-        def __init__(self):
-            # we can access the FormFillingAgent instance through .parent
-            self.parent.df
-
-            # We now have to define the function definition and assign it to the reserved self.tool_def variable
-            self.tool_def = TOOL_DEF(
-                name = "add_or_modify_form_values",
-                description = "tool to add or modify field values",
-                properties = [
-                    STR(
-                        name = "field_name",
-                        enums=self.parent.df["Field"].values.tolist()
-                        ),
-                    STR(
-                        name = "value"
-                    )
-                ]
-            )
-
-        # Main function of the tool is called when the tool is invoked by the agent
-        def main(self, field_name,value):
-            # let's set the value in the master dataframe
-            self.parent.df.loc[self.parent.df['Field'] == field_name, 'Value'] = value
-            # Update the ENV
-            self.parent.ENV[0] = self.parent.df.to_markdown(index=False)
-            # response to the agent
-            return "Added value '"+str(value) + " to Field '"+field_name+"'"
-
-```
-> `TOOL_DEF` is a helper proxy for the JSON-SCHEMA of OpenAI function calling. You can directly add the json or even use your own pydantic model's `model_json()`. `TOOL_DEF` and associated `tools.*` would make the code less verbose and have the advantage of intellisense.
-
-Checkout <br/>**[aiide's tool use tutorial](https://github.com/Anilturaga/aiide/blob/main/assets/tool_definitions.md)**
-
-3. That's it. We can now start using the agent
-
-`chat` is the function you invoke to start streaming agent response
-```python
-# create the agent instance
-agent = FormFillingAgent()
+agent = Chatbot()
 while True:
-    # get the user message
-    user_query = input("User: ")
-    # you can enable and disable tools as you wish with the tools array
-    for each in agent.chat(user_query, tools=["add_or_modify_form_values"]):
-        # if the agent is reponding in text
-        if each["type"] == "text":
-            print(each["delta"],end="")
-        # is the agent is calling a tool
-        if each["type"] == "tool":
-            print("TOOL CALL:",each["name"],each["arguments"])
-        # the tool's response to the agent
-        if each["type"] == "tool_response":
-            print("TOOL RESPONSE",each["response"])
-    # for debugging, let's print the table after every turn
-    print(agent.df)
+    user_input = input("\nSend a message: ")
+    if user_input == "exit":
+        break
+    for delta in agent.chat(user_message=user_input):
+        if delta["type"] == "text":
+            print(delta["delta"],end="")
+	
 ```
 
-4. What if you want to take user's consent everytime before filling the table?
-it's incredibly simple!
+Let's break down the code:
+- We defined a class Chatbot that inherits from Aiide. Classes are a great way to encapsulate the chatbot logic and state. It also enables sharing state with tools and structured outputs as we will see later.
+- We set up the chatbot with a system message and a model. The model can be anything supported by LiteLM.
+- We then create an instance of the Chatbot and start a loop to chat with the bot.
+- The chat loop returns a generator of deltas. Each delta has a type and content. The type can be either text, tool_call or tool_response. If the delta type is text, it will have delta and content as it's keys. If the delta type is tool_call, it will have name and arguments as it's keys. If the delta type is tool_response, it will have name, arguments and response as it's keys.
 
-You simply add a consent bool variable in the Tool class and update it in the chat loop as needed.
 
-Here is the updated code:
+#### User Message Input
+`user_message` can take a couple of types of inputs. It can be a string as you've just seen, it can be an image object(`PIL.Image`) it can be an array of strings and images.
+
+Different ways to use user_message:
 ```python
-# edit the tool to reject is the user rejects
-class FormFillingAgent(AIIDE):
-    def __init__(self):
-        ... previous code
-    class Tool:
-        def __init__(self):
-            # User consent bool
-            self.user_consent = False
+user_message = "What's the weather like in SF"
+image = Image.open("image.jpg")
+user_message = image
+user_message = [image, "Annotate the attached image"]
+```
+<!--
+user_message = {"RAG":"Some large content","query":"Actual user message"}
+Reasoning for using dict as input:
+When you pass a dict for user_message in aiide, it will only pass in the values to the LLM. The keys are instead useful to later update or remove pieces of information from the memory/chat history.
+-->
 
-            ... previous code
+## Memory
 
-        def main(self, field_name,value):
-            if self.user_consent == False:
-                return "User has rejected the insert, please try again"
+A natural question for the above snippet is how do we track the chat history?
 
-            # let's set the value in the master dataframe
-            self.parent.df.loc[self.parent.df['Field'] == field_name, 'Value'] = value
-            # Update the ENV
-            self.parent.ENV[0] = self.parent.df.to_markdown(index=False)
-            # response to the agent
-            return "Added value '"+str(value) + " to Field '"+field_name+"'"
+aiide has first-class support for memory. We have found that handling OpenAI JSON based schema is cumbersome and error-prone. So, we have abstracted the chat history into a pandas DataFrame.
 
-agent = FormFillingAgent()
+`messages` is a pandas DataFrame that stores all the messages, tool calls and responses of a chat session. 
+
+You can access the memory of the chatbot by calling `agent.messages` in the above example.
+
+The schema of the messages DataFrame is as follows:
+
+| role | content | arguments | response |
+|-------------|-----------|-------------| ------------ |
+| system  | You are a helpful assistant | None | None |
+| user  | What's the weather like in SF | None | None |
+| tool  | {'name':'get_weather','id':'abc'} | {'location':'SF'} | {'temperature':'72'} |
+| assistant  | The weather is 72 degress right now. | None | None |
+
+You can use the memory DataFrame to analyze and manipulate the chat history and the tool calls and responses.
+
+## Structured Outputs
+
+Currently the LLM can respond with text in any format. Sometimes it thinks first, sometimes it will answer in code right away. What if we want to structure the output in a specific way?
+
+Currently to my knowledge, OpenAI and Google AI supports structured outputs. aiide has a common interface for structured outputs.
+
+Let's see how we can use structured outputs in aiide.
+
+```python
+from aiide import Aiide
+from aiide.schema import structured_outputs_gen, Str
+
+class Chatbot(Aiide):
+    def  __init__(self):
+        self.setup(system_message="You are a helpful assistant.", model="gpt-4o-mini-2024-07-18")
+    def structured_ouputs(self):
+        return structured_outputs_gen(
+            name="chain_of_thought",
+            properties=[
+                Str(name="thinking", description="Use this field to think out loud. Breakdown the user's query, plan your response, etc."),
+                Str(name="response"),
+            ],
+            required=["thinking", "response"],
+        )
+
+agent = Chatbot()
 while True:
-    user_query = input("User: ")
-    for each in agent.chat(user_query, tools=["add_or_modify_form_values"]):
-        if each["type"] == "text":
-            print(each["delta"],end="")
-        if each["type"] == "tool":
-            print("TOOL CALL:",each["name"],each["arguments"])
-            # ask for user consent
-            user_consent = input("do you approve the above tool call?(y/n)")
-            if user_consent == 'y:
-                # you can access the tool instance like so
-                agent.Tool.user_consent = True
-            else:
-                agent.Tool.user_consent = False
-        if each["type"] == "tool_response":
-            print("TOOL RESPONSE",each["response"])
-
+    user_input = input("\nSend a message: ")
+    if user_input == "exit":
+        break
+    for delta in agent.chat(user_message=user_input,json_mode=True):
+        if delta["type"] == "text":
+            print(delta["delta"],end="")
 ```
+Test out the infamous question `How many R letters are there in the word "strawberry"?`
 
-5. Bonus!
-You can use completions and stop sequences in the `chat` function's arguments to implement prompting techniques such as ReAct, CoT etc!<br/>
-For Example:
+Now, let's break down the changes code:
+- We import `structured_outputs_gen` and `Str` from `aiide.schema`. Both of these will aide(heh) in defining the structured outputs json schema.
+> I did not love pydantic for defining json schemas. I have observed that a lot of developers are omitting fields such as descriptions and enums while defining schemas with pydantic. It also does not have an easier way to dynamically change the schema. So, I have created a simple interface to define structured outputs that is as flexible as possible and also helps the developer understand what they can do for each type by the help of intellisense. Please checkout the [aiide's JSON Schema](./assets/schema_definitions.md) for more information.
+- We override a method `structured_outputs` in `Aiide` that returns the structured output generator. The beauty of this is that you can define multiple structured outputs return the appropriate one based on the context.
+- We pass `json_mode=True` to the `chat` method. This will enable the structured outputs.
+
+
+## Tools
+
+Tools are the heart of aiide. They are the actions that the LLM can take. They can be as simple as a function call or as complex as a hierarchical LLM agents.
+
+You define tools as classes and pass instances to the Aiide instance. The lifecycle of handling the tool calls, it's execution and feeding the response back into the LLM is all handled by aiide. You however, can still control the execution of the tool based on the values of deltas.
+
+Let's see how we can define a tool in aiide.
+
 ```python
-from aiide import AIIDE
+import random
 import json
-from aiide.tools import *
+from aiide import Aiide, Tool
+from aiide.schema import tool_def_gen, Str
 
-class Agent(AIIDE):
+class WeatherTool(Tool):
+    def __init__(self, parent):
+        self.error = False
+
+    def tool_def(self):
+        return tool_def_gen(
+            name="get_current_weather",
+            description="Get the current weather in a given location",
+            properties=[
+                Str(
+                    name="location",
+                    description="The city and state, e.g. San Francisco, CA",
+                ),
+                Str(name="unit", enums=["celsius", "fahrenheit"]),
+            ],
+        )
+
+
+    def main(self, location, unit="default"): # type: ignore
+        if self.error:
+            return json.dumps({"error": 404})
+        else:
+            return json.dumps({"location": location, "temperature": random.randint(0, 100), "unit": unit})
+
+class Agent(Aiide):
     def __init__(self):
-        self.outer_var = 15
+        # passing the chatbot instance to the tool for bi-directional communication
+        self.weatherTool = WeatherTool(self)
         self.setup(
-            messages=[{"role": "system", "content": "You are a helpful assistant."}],
-            temperature=0.0,
+            system_message="You are a helpful assistant.",
         )
 
 agent = Agent()
-poems = []
-for each in agent.chat(
-    "Write 2 poems but end each poem with '---'", completion="1.", stop_words=["---"]
+for delta in agent.chat(
+    user_message="What's the weather like in San Francisco, Tokyo, and Paris?",
+    tools=[agent.weatherTool],
 ):
-    print(each["delta"], end="")
-poems.append(each["content"])
-print("\n\nSecond generation\n\n")
-for each in agent.chat(completion="---\n2. "):
-    print(each["delta"], end="")
-poems.append(each["content"])
-print("\n",poems)
+    # printing response based on the type of delta
+    if delta["type"] == "text":
+        print(delta["delta"], end="")
+    if delta["type"] == "tool_call":
+        print("Tool called:", delta["name"], "with arguments:", delta["arguments"])
+    if delta["type"] == "tool_response":
+        print("Tool response for tool:", delta["name"], " with arguments:", delta["arguments"], "is:", delta["response"])
+
+    # changing the execution of the tool based on the context of the conversation
+    if delta["type"] == "tool_call" and "tokyo" in delta["arguments"].lower():
+        agent.weatherTool.error = True
+    else:
+        agent.weatherTool.error = False
+
+
 ```
-### Reserved variables
-Here is a non-exhaustive list of helper variables available across aiide agents and tools.
+
+Let's break down the code:
+- We import `Tool` from `aiide` and `tool_def_gen` and `Str` from `aiide.schema`. `Tool` is the base class for all tools in aiide. `tool_def_gen` is a tool definition generator that helps in defining the tool schema. `Str` is a string type that can have description, enums.
+- We define a class `WeatherTool` that inherits from `Tool`. We define the `__init__` method to initialize the tool. We define the `tool_def` method to define the tool schema. We finally define the `main` method to define the tool logic.
+- For activating the tool, we can pass the tool instance to the `chat` method through the `tools` array parameter. 
+- As mentioned previously, the delta has three types: `text`, `tool_call`, and `tool_response`. When type of delta is tool, the delta will have name and arguments keys for the tool called. After the tool is executed, the delta will have a type of tool_response and the response key will have the response of the tool.
+- If you observe the code, we are setting a boolean flag `error` in the tool instance based on the location. This way, you can control the execution of a tool based on the context of the conversation and the tool's state. A good example would be taking user's consent before executing code.
+- This way, you can activate or deactivate tools based on the context of the conversation.
+
+#### Delta Schema
+
+The delta schema is as follows:
+
+| Type           | Keys                                                                                   |
+|----------------|----------------------------------------------------------------------------------------|
+| text           | - delta: The text content of the delta                                                |
+|                | - content: The full content of the delta, including the text and any additional data   |
+| tool_call      | - name: The name of the tool being called                                              |
+|                | - arguments: The arguments passed to the tool                                          |
+| tool_response  | - name: The name of the tool that generated the response                               |
+|                | - arguments: The arguments passed to the tool                                          |
+|                | - response: The response generated by the tool                                         |
+
+## JSON Schema
+
+As mentioned earlier, aiide has a simple interface to define JSON schemas. This is useful for defining structured outputs and tools that might change based on the context of the conversation.
+
+Please read the tutorial on [aiide's JSON Schema](./assets/schema_definitions.md).
+
+## Misc
+
