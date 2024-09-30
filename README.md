@@ -30,7 +30,7 @@ Let's start by installing the package.
 ```bash
 pip install aiide
 ```
-This also installs LiteLM and Pandas by default. If you would like to use other LLM providers such as Anthropic or Google AI, please install the respective SDK as well.
+This also installs LiteLLM and Pandas by default. If you would like to use other LLM providers such as Anthropic or Google AI, please install the respective SDK as well.
 
 The whole tutorial uses OpenAI models but it should work with all the popular LLM providers.
 
@@ -57,10 +57,12 @@ while True:
 
 Let's break down the code:
 - We defined a class Chatbot that inherits from Aiide. Classes are a great way to encapsulate the chatbot logic and state. It also enables sharing state with tools and structured outputs as we will see later.
-- We set up the chatbot with a system message and a model. The model can be anything supported by LiteLM.
+- We set up the chatbot with a system message and a model. The model can be anything supported by LiteLLM.
 - We then create an instance of the Chatbot and start a loop to chat with the bot.
 - The chat loop returns a generator of deltas. Each delta has a type and content. The type can be either text, tool_call or tool_response. If the delta type is text, it will have delta and content as it's keys. If the delta type is tool_call, it will have name and arguments as it's keys. If the delta type is tool_response, it will have name, arguments and response as it's keys.
 
+
+> `setup` and `chat` has a lot of optional parameters that you can find while hovering over the method in your IDE. Some notable parameters for `setup` are `model`, `temperature`, `api_key`, and any supported LiteLLM completion parameters. Similarly, `chat` has parameters such as `tools`, `stop_words`, `tool_choice` etc.
 
 #### User Message Input
 `user_message` can take a couple of types of inputs. It can be a string as you've just seen, it can be an image object(`PIL.Image`) it can be an array of strings and images.
