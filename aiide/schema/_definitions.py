@@ -239,6 +239,20 @@ class AnyOf:
         }
         return {self.name: schema}
 
+class Nullable:
+    """
+    Makes the direct child of this object nullable
+
+    Attributes:
+        child (object): The object to make nullable
+    """
+
+    def __init__(self, child: Str | Num | Float | Bool | Object | Array):
+        self.child = child
+    def json(self):
+        schema = self.child.json()
+        schema[self.child.name]["type"] = [schema[self.child.name]["type"], "null"] 
+        return schema
 
 def tool_def_gen(
     name: str,

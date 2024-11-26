@@ -1,6 +1,6 @@
 from aiide import Aiide, Tool
 import json
-from aiide.schema import tool_def_gen, structured_outputs_gen, AnyOf, Str, Array
+from aiide.schema import tool_def_gen, structured_outputs_gen, AnyOf, Str, Array, Nullable
 import random
 
 def test_aiide_instance():
@@ -46,6 +46,8 @@ def test_aiide_instance():
             agent.weatherTool.bool = True
         else:
             agent.weatherTool.bool = False
+    print(agent.usage)
+    
 
 def test_aiide_anyof():
     class Tool1(Tool):
@@ -177,7 +179,7 @@ def test_aiide_image_input():
         json_mode=False,
     ):
         print(each)
-
+    print(agent.usage)
 
 def test_aiide_structured_output():
     class Agent(Aiide):
@@ -197,8 +199,14 @@ def test_aiide_structured_output():
                         description="List of hashtags for the image",
                         item=Str(name="tag", description="Every tag starts with a #"),
                     ),
+                    Nullable(
+                        Str(
+                            name="refusal",
+                            description="Reason for refusal",
+                        )
+                    )
                 ],
-                required=["image_description", "tags"],
+                required=["image_description", "tags","refusal"],
             )
 
     agent = Agent()
@@ -216,6 +224,7 @@ def test_aiide_structured_output():
         json_mode=True,
     ):
         print(each)
+    print(agent.usage)
 
 
 def test_aiide_input_dict():

@@ -2,9 +2,11 @@ import copy
 import json
 import os
 from openai import OpenAI, NotGiven
-from ._utils import find_inner_classes, create_messages_dataframe, CustomConverter
+from ._utils import find_inner_classes, create_messages_dataframe, CustomConverter, parse_json
 import warnings
 from litellm import completion as litellm_completion
+from litellm import stream_chunk_builder as litellm_stream_chunk_builder
+from litellm.cost_calculator import cost_per_token as litellm_cost_per_token
 import litellm
 import abc
 import pandas as pd
@@ -71,6 +73,12 @@ class Aiide:
         self._model = model
         self._temperature = temperature
         self.messages: pd.DataFrame = create_messages_dataframe(history_openai_format)
+        
+        self.usage = {
+            "prompt_tokens": 0.0,
+            "completion_tokens": 0.0,
+            "usd": 0.0,
+        }
         if system_message:
             self.messages.loc[len(self.messages)] = { # type: ignore
                 "role": "system",
@@ -188,7 +196,7 @@ class Aiide:
                 if schema != {}:
                     response_format["json_schema"] = schema  # type: ignore
                     # response_format["strict"] = True
-
+            messages_prev = copy.deepcopy(self.messages.aiide.to_openai_dict())
             response_generator = litellm_completion(
                 model=self._model,
                 messages=self.messages.aiide.to_openai_dict(),
@@ -206,13 +214,19 @@ class Aiide:
             )
             response_text = ""
             temp_function_call = []
+            chunks = []
             for response_chunk in response_generator:
+                chunks.append(response_chunk)
                 self.messages.reset_index(drop=True, inplace=True)
                 deltas = response_chunk.choices[0].delta  # type: ignore
                 finish_reason = response_chunk.choices[0].finish_reason  # type: ignore
                 # print("deltas",deltas)
                 if deltas.content:
                     response_text += deltas.content
+                    if json_mode == True and self.structured_ouputs() != {}:
+                        yield_response_text = parse_json(response_text)
+                    else:
+                        yield_response_text = response_text
                     if self.messages.iloc[-1]["role"] == "assistant":
                         self.messages.loc[self.messages.index[-1], "content"] = response_text
                     else:
@@ -225,7 +239,7 @@ class Aiide:
                                 "response": [None],
                             })
                         ])
-                    yield {"type": "text", "content": response_text, "delta": deltas.content}
+                    yield {"type": "text", "content": yield_response_text, "delta": deltas.content}
                 
                 #! Temporarily disabled yielding of tool calls as they are generated
                 # # to yield a tool call, we first check if tool calls have been created, and if so, we check if if the model is actively creating a tool call or if it has finished. hopefully, we can simplify this logic in the future
@@ -310,10 +324,19 @@ class Aiide:
                         if type(tool_choice) == dict or tool_choice == "required":
                             # If a tool has been forcefully called for more than 100 times, we exit after the final tool execution to avoid usage blowup
                                 # warnings.warn("Tools have been called 100 times consecutively. If this is the expected behaviour, please raise an issue on our GitHub Repository!")
+                            self.usage["prompt_tokens"] += litellm_stream_chunk_builder(chunks, messages_prev)['usage']["prompt_tokens"]
+                            self.usage["completion_tokens"] += litellm_stream_chunk_builder(chunks, messages_prev)['usage']["completion_tokens"]
+                            self.usage["usd"] += sum(litellm_cost_per_token(model=self._model, prompt_tokens=self.usage["prompt_tokens"], completion_tokens=self.usage["completion_tokens"]))
                             return
                     elif finish_reason == "length":  # type: ignore
                         warnings.warn("Output token limit reached. Continuing the generation.")
                     else:
                         # print("!!!!!!!GPT STOP")
+                        self.usage["prompt_tokens"] += litellm_stream_chunk_builder(chunks, messages_prev)['usage']["prompt_tokens"]
+                        self.usage["completion_tokens"] += litellm_stream_chunk_builder(chunks, messages_prev)['usage']["completion_tokens"]
+                        self.usage["usd"] += sum(litellm_cost_per_token(model=self._model, prompt_tokens=self.usage["prompt_tokens"], completion_tokens=self.usage["completion_tokens"]))
                         return
+            self.usage["prompt_tokens"] += litellm_stream_chunk_builder(chunks, messages_prev)['usage']["prompt_tokens"]
+            self.usage["completion_tokens"] += litellm_stream_chunk_builder(chunks, messages_prev)['usage']["completion_tokens"]
+            self.usage["usd"] += sum(litellm_cost_per_token(model=self._model, prompt_tokens=self.usage["prompt_tokens"], completion_tokens=self.usage["completion_tokens"]))
         return

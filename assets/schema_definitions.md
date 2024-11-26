@@ -1,6 +1,6 @@
 # AIIDE's JSON Schema definitions
 
-Since aiide uses LiteLM under the hood, all the schema definitions follow OpenAI's specification.
+Since aiide uses LiteLLM under the hood, all the schema definitions follow OpenAI's specification.
 
 Defining OpenAI function definitions in python currently has two ways
 1. JSON schema
@@ -34,7 +34,7 @@ Since Pydantic is meant mostly for defining and validating types, the class base
 **Our solution**<br/>
 aiide has the following types defined
 ```python
-from aiide.schema import tool_def_gen, structured_outputs_gen, Num, Float, Str, Bool, Array, Object, AnyOf
+from aiide.schema import tool_def_gen, structured_outputs_gen, Num, Float, Str, Bool, Array, Object, AnyOf, Nullable
 ```
 
 Here is the implementation of the above tool definition with `aiide.schema`<br/>
@@ -68,6 +68,8 @@ There are a couple of advantages to using aiide's schema definitions
 1. You get intellisense for all the attributes
 2. You can easily change the schema on the fly based on the tool's state and the chat context
 3. Tool definition and tool execution logic stays in the same tool class and nesting definitions still ensures everything is in one place
+
+There is **one** disadvantage to using aiide's schema definitions which is the lack of validation of the generated schema. Right now, we are trusting the API provider to provide the correct schema but we will be adding validation in the future.
 
 **Complex example**
 1. Let's say we want to update the tool definition to enable adding/updating multiple records at a time. Here is the json definition where the LLM calls the tool with an array of dictionaries with field and value as the keys.
@@ -142,3 +144,7 @@ tool_def_gen(
     ],
 )
 ```
+
+If you are relatively new to JSON schema, you might not have come across AnyOf and Nullable. Here is a quick explanation:
+1. AnyOf: This is used when you want to define multiple types for a single attribute. For example, if you want to define a field that can be either a string or a number, you can use AnyOf
+2. Nullable: This is used when you want to define a field that can be null. For example, if you want to define a field that can be either a string or null, you can use Nullable. This is very useful for structured outputs cause currently all the fields are required.

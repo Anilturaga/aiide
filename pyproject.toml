@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "aiide"
-version = "0.0.5"
+version = "0.0.6"
 description = "aiide is a framework to build LLM copilots."
 authors = ["Anilturaga"]
 readme = "README.md"
@@ -11,7 +11,7 @@ keywords = ["llm", "openai"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-litellm = "^1.43.1"
+litellm = "^1.52.16"
 pandas = "^2.2.2"
 pyarrow = "^17.0.0"
 pillow = "^10.4.0"
