@@ -8,14 +8,6 @@ aiide is a framework to build LLM copilots.
 
 It is born out of 3 years of experience building LLM applications starting from GPT-3 completion models to the latest frontier chat models.
 
-| What you get with aiide? | What's not part of aiide? |
-|--------------------------|--------------------------|
-| Full control over content sent to the LLM | Verbose abstractions for common prompting techniques |
-| Tools and structured outputs are first class citizens for actions and content generation | Chains as a core building block |
-| Simplified streaming by default to build real-time apps | Output parsing tools |
-| Messages history is a Pandas DataFrame | Complex nested JSON objects |
-
-
 ## Table of Contents
 * [Installation](#installation)
 * [Chat](#chat)
