@@ -4,6 +4,23 @@
 </picture></div>
 <br/>
 
+<div align="center">
+
+![PyPI Version](https://img.shields.io/pypi/v/aiide)
+![PyPI Download](https://img.shields.io/pypi/dm/aiide)
+![Build](https://img.shields.io/badge/build-passing-brightgreen?style=flat)
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+![Python](https://img.shields.io/badge/python-3.10+-blue)
+![GitHub Issues](https://img.shields.io/github/issues/Anilturaga/aiide)
+
+</div>
+<!---![GitHub Stars](https://img.shields.io/github/stars/Anilturaga/aiide?style=social)
+![Coverage Status](https://img.shields.io/codecov/c/github/Anilturaga/aiide)
+![Python Versions](https://img.shields.io/pypi/pyversions/aiide)
+![Build Status](https://img.shields.io/github/workflow/status/Anilturaga/aiide/CI)
+![GitHub Contributors](https://img.shields.io/github/contributors/Anilturaga/aiide)
+![GitHub Last Commit](https://img.shields.io/github/last-commit/Anilturaga/aiide)
+ ![GitHub Forks](https://img.shields.io/github/forks/Anilturaga/aiide?style=social) --->
 aiide is a framework to build LLM copilots.
 
 It is born out of 3 years of experience building LLM applications starting from GPT-3 completion models to the latest frontier chat models.
@@ -110,7 +127,7 @@ from aiide.schema import structured_outputs_gen, Str
 class Chatbot(Aiide):
     def  __init__(self):
         self.setup(system_message="You are a helpful assistant.", model="gpt-4o-mini-2024-07-18")
-    def structured_ouputs(self):
+    def structured_outputs(self):
         return structured_outputs_gen(
             name="chain_of_thought",
             properties=[
