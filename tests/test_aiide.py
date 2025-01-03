@@ -189,7 +189,7 @@ def test_aiide_structured_output():
                 system_message="You are a helpful assistant.",
             )
 
-        def structured_ouputs(self):
+        def structured_outputs(self):
             return structured_outputs_gen(
                 name="annotation",
                 properties=[
@@ -235,7 +235,7 @@ def test_aiide_input_dict():
                 system_message="You are a helpful assistant.",
             )
 
-        def structured_ouputs(self):
+        def structured_outputs(self):
             return structured_outputs_gen(
                 name="annotation",
                 properties=[
@@ -277,7 +277,7 @@ def test_aiide_readme():
     class Chatbot(Aiide):
         def  __init__(self):
             self.setup(system_message="You are a helpful assistant.", model="gpt-4o-mini-2024-07-18")
-        def structured_ouputs(self):
+        def structured_outputs(self):
             return structured_outputs_gen(
                 name="chain_of_thought",
                 properties=[

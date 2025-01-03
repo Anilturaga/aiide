@@ -88,7 +88,7 @@ class Aiide:
             }
         self._kwargs = kwargs
 
-    def structured_ouputs(self):
+    def structured_outputs(self):
         """
         Structured Outputs is a feature that ensures the model will always generate responses in a specific format. Return JSON Schema definition for the generation.
         """
@@ -192,7 +192,7 @@ class Aiide:
                 tool_choice = None  # type: ignore
             if json_mode:
                 # calling structured_output function
-                schema = self.structured_ouputs()
+                schema = self.structured_outputs()
                 if schema != {}:
                     response_format["json_schema"] = schema  # type: ignore
                     # response_format["strict"] = True
@@ -223,7 +223,7 @@ class Aiide:
                 # print("deltas",deltas)
                 if deltas.content:
                     response_text += deltas.content
-                    if json_mode == True and self.structured_ouputs() != {}:
+                    if json_mode == True and self.structured_outputs() != {}:
                         yield_response_text = parse_json(response_text)
                     else:
                         yield_response_text = response_text
