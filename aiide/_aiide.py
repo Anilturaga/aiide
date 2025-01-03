@@ -227,6 +227,8 @@ class Aiide:
                         yield_response_text = parse_json(response_text)
                     else:
                         yield_response_text = response_text
+                    #! Fix - temporarily disabling partail json parsing of structured output responses
+                    yield_response_text = response_text
                     if self.messages.iloc[-1]["role"] == "assistant":
                         self.messages.loc[self.messages.index[-1], "content"] = response_text
                     else:
