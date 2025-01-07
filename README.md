@@ -1,7 +1,9 @@
 <div align="center"><picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://github.com/Anilturaga/aiide/blob/main/assets/figures/logo_dark.svg?raw=True">
   <img alt="aiide" src="https://github.com/Anilturaga/aiide/blob/main/assets/figures/logo.svg?raw=True" width=200">
-</picture></div>
+</picture>
+<div>Framework to build LLM Copilots</div>
+</div>
 <br/>
 
 <div align="center">
@@ -21,11 +23,8 @@
 ![GitHub Contributors](https://img.shields.io/github/contributors/Anilturaga/aiide)
 ![GitHub Last Commit](https://img.shields.io/github/last-commit/Anilturaga/aiide)
  ![GitHub Forks](https://img.shields.io/github/forks/Anilturaga/aiide?style=social) --->
-aiide is a framework to build LLM copilots.
 
-<br/>
 Features:
-
 1. Streaming as default for best UX
 2. Message history as a pandas DataFrame
 3. Simple yet powerful JSON Schema definition helpers
