@@ -25,10 +25,10 @@
  ![GitHub Forks](https://img.shields.io/github/forks/Anilturaga/aiide?style=social) --->
 
 Features:
-1. Streaming as default for best UX
-2. Message history as a pandas DataFrame
-3. Simple yet powerful JSON Schema definition helpers
-4. Intuitive and scalable Tool and Structured Outputs functionality
+1. Message history as a pandas DataFrame
+2. Simple yet powerful JSON Schema definition helpers
+3. Streaming as default
+4. Scalable Tool and Structured Outputs functionality
 5. Usage and cost tracking
 6. LLM friendly documentation
 <!-- It is born out of 3 years of experience building LLM applications starting from GPT-3 completion models to the latest frontier chat models. -->
