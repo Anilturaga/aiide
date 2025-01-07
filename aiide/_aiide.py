@@ -10,7 +10,7 @@ from litellm.cost_calculator import cost_per_token as litellm_cost_per_token
 import litellm
 import abc
 import pandas as pd
-
+from jiter import from_json
 litellm.drop_params = True
 
 
@@ -224,11 +224,9 @@ class Aiide:
                 if deltas.content:
                     response_text += deltas.content
                     if json_mode == True and self.structured_outputs() != {}:
-                        yield_response_text = parse_json(response_text)
+                        yield_response_text = from_json(response_text.encode(), partial=True)
                     else:
                         yield_response_text = response_text
-                    #! Fix - temporarily disabling partail json parsing of structured output responses
-                    yield_response_text = response_text
                     if self.messages.iloc[-1]["role"] == "assistant":
                         self.messages.loc[self.messages.index[-1], "content"] = response_text
                     else:
