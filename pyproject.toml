@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "aiide"
-version = "0.0.6"
+version = "0.0.7"
 description = "aiide is a framework to build LLM copilots."
 authors = ["Anilturaga"]
 readme = "README.md"
