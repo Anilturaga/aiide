@@ -35,7 +35,6 @@ Features:
 
 This is how an aiide copilot looks like:
 ```python
-```python
 import random
 import json
 from aiide import Aiide, Tool
