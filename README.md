@@ -33,6 +33,68 @@ Features:
 6. LLM friendly documentation
 <!-- It is born out of 3 years of experience building LLM applications starting from GPT-3 completion models to the latest frontier chat models. -->
 
+This is how an aiide copilot looks like:
+```python
+```python
+import random
+import json
+from aiide import Aiide, Tool
+from aiide.schema import tool_def_gen, Str
+
+class WeatherTool(Tool):
+    def __init__(self, parent):
+        self.error = False
+
+    def tool_def(self):
+        return tool_def_gen(
+            name="get_current_weather",
+            description="Get the current weather in a given location",
+            properties=[
+                Str(
+                    name="location",
+                    description="The city and state, e.g. San Francisco, CA",
+                ),
+                Str(name="unit", enums=["celsius", "fahrenheit"]),
+            ],
+        )
+
+
+    def main(self, location, unit="default"): # type: ignore
+        if self.error:
+            return json.dumps({"error": 404})
+        else:
+            return json.dumps({"location": location, "temperature": random.randint(0, 100), "unit": unit})
+
+class Agent(Aiide):
+    def __init__(self):
+        # passing the chatbot instance to the tool for bi-directional communication
+        self.weatherTool = WeatherTool(self)
+        self.setup(
+            system_message="You are a helpful assistant.",
+        )
+
+agent = Agent()
+for delta in agent.chat(
+    user_message="What's the weather like in San Francisco, Tokyo, and Paris?",
+    tools=[agent.weatherTool],
+):
+    # printing response based on the type of delta
+    if delta["type"] == "text":
+        print(delta["delta"], end="")
+    if delta["type"] == "tool_call":
+        print("Tool called:", delta["name"], "with arguments:", delta["arguments"])
+    if delta["type"] == "tool_response":
+        print("Tool response for tool:", delta["name"], " with arguments:", delta["arguments"], "is:", delta["response"])
+
+    # changing the execution of the tool based on the context of the conversation
+    if delta["type"] == "tool_call" and "tokyo" in delta["arguments"].lower():
+        agent.weatherTool.error = True
+    else:
+        agent.weatherTool.error = False
+
+
+```
+
 ## Table of Contents
 * [Installation](#installation)
 * [Chat](#chat)
